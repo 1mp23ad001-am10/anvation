@@ -288,3 +288,17 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px}
 .brief-checklist li em{padding-top:1px;color:#8c9287;font:8px var(--mono);font-style:normal;text-transform:uppercase}
 .brief-checklist li.is-captured em{color:#61774d}
 @media(max-width:620px){.speech-intake-head{align-items:flex-start;flex-direction:column}.speech-actions{width:100%}.speech-actions button{flex:1}.controls-panel #topic{min-height:205px}.brief-checklist li{grid-template-columns:17px minmax(0,1fr)}.brief-checklist li em{grid-column:2}}
+
+/* Setup masthead: keep the step marker in the document flow so it never
+   collides with the question title, and use the same mark as the workspace. */
+.brand-symbol{display:block;width:27px;height:27px;flex:none;color:var(--ink)}
+.setup-wordmark{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font:800 18px var(--sans);letter-spacing:-.9px}
+.setup-wordmark .brand-symbol{width:34px;height:34px}
+.is-setup .setup-progress{position:relative;inset:auto;display:flex;align-items:center;gap:clamp(16px,3vw,32px);width:min(100%,740px);margin:clamp(28px,5vh,48px) auto clamp(34px,6vh,58px);padding:0;color:#788073;font:9px var(--mono);letter-spacing:.65px}
+.is-setup .setup-progress>span{flex:none;white-space:nowrap}
+.is-setup .setup-progress>div{height:auto;max-width:none;flex:1;background:transparent}
+.is-setup .setup-step-bars{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:auto!important;height:auto!important;max-width:none!important;flex:1;background:transparent!important}
+.is-setup .setup-step-bars i{display:block!important;width:auto!important;height:3px!important;background:#e0e3d9;border-radius:3px;transition:background .25s}
+.is-setup .setup-step-bars i.is-active{background:#768a54}
+.is-setup .setup-question>.eyebrow{display:none}
+@media(max-width:560px){.is-setup .setup-progress{flex-wrap:wrap;gap:12px;margin:28px auto 34px}.is-setup .setup-step-bars{flex-basis:100%}}

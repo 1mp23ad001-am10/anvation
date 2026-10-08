@@ -23,6 +23,8 @@ let customVoiceProfile = null;
 let creatorCategory = "product";
 let importedSamplePosts = null;
 let outputLanguage = "English";
+let setupStep = 1;
+let setupAnswers = {};
 let scenarioCatalog = {};
 let voiceProfiles = [];
 let platformAccounts = {};
@@ -195,7 +197,6 @@ async function discoverPublicPosts(){
     if(!results.length){$("#discover-status").textContent=`No posts returned by the profile API.${failures?` ${failures}`:""} Continue with a recording or voice description.`;return;}
     $("#discover-status").textContent=`${results.length} posts from the selected profile API. Select only posts you wrote.${failures?` ${failures}`:""}`;
     $("#discover-results").innerHTML=results.map((x,i)=>`<label class="discover-item"><input type="checkbox" data-result-index="${i}"><span><strong>${escapeHtml(x.platform||"").toUpperCase()} · ${escapeHtml(x.title||"Public post excerpt")}</strong><span>${escapeHtml(x.snippet||"")}</span><a href="${escapeHtml(x.link||"#")}" target="_blank" rel="noopener">Open source ↗</a></span></label>`).join("");
-    $("#use-profile-posts").hidden=false;
   }catch(e){$("#discover-status").textContent=e.message||"Search unavailable. Continue without search.";}
 }
 function useSelectedProfilePosts(){
@@ -208,7 +209,6 @@ function useSelectedProfilePosts(){
 async function transcribeVoiceAudio(){
   const file=$("#voice-audio")?.files?.[0];
   if(!file){$("#voice-audio-status").textContent="Choose an audio recording first.";return;}
-  if(document.querySelectorAll(".voice-check:checked").length!==4){$("#voice-audio-status").textContent="Check all four items so Whisper has the details your draft needs.";return;}
   $("#transcribe-voice").disabled=true;$("#voice-audio-status").textContent="Transcribing on this computer with Whisper…";
   try{
     const form=new FormData();form.append("file",file);
@@ -216,8 +216,11 @@ async function transcribeVoiceAudio(){
     if(!response.ok)throw new Error(data.error||"Transcription failed.");
     $("#voice-description").value=[$("#voice-description").value.trim(),data.text].filter(Boolean).join("\n\n");
     voiceMode="fresh";generateLocal();
-    const labels={kn:"Kannada",hi:"Hindi",en:"English"};
-    $("#voice-audio-status").textContent=`Transcribed in ${labels[data.language]||data.language}. Edit the transcript below if needed.`;
+    const detected=detectWritingLanguage(data.language,data.text);
+    outputLanguage=detected;$("#campaign-language").value=detected;
+    if(setupStep>=3)setupAnswers.language=detected;
+    if($("#output-language"))$("#output-language").value=detected;
+    $("#voice-audio-status").textContent=`Detected ${detected} from your recording. Draft language updated automatically; edit the transcript if needed.`;
   }catch(error){$("#voice-audio-status").textContent=error.message||"Could not transcribe this recording.";}
   finally{$("#transcribe-voice").disabled=false;}
 }
@@ -232,6 +235,16 @@ async function loadVoiceProfiles(){
     const select=$("#saved-voice-select");select.innerHTML='<option value="">Choose a saved voice</option>'+voiceProfiles.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} · ${escapeHtml(p.language||"English")}</option>`).join("");
     $("#delete-voice-profile").disabled=!selectedVoiceProfileId;
   }catch{}
+}
+function detectWritingLanguage(whisperLanguage,text){
+  if(/[\u0C80-\u0CFF]/u.test(text))return "Kannada";
+  if(/[\u0900-\u097F]/u.test(text))return "Hindi";
+  const tokens=new Set((text.toLowerCase().match(/[\p{L}\p{M}]+/gu)||[]));
+  const kannadaCues=["ide","idu","inda","nanna","nimma","beku","alla","agide","maadi","ivattu","yenu","namma","swalpa"];
+  const hindiCues=["hai","hain","hoon","aap","mera","meri","kaise","kya","nahi","mein","hum","aur","ko"];
+  if(kannadaCues.filter(x=>tokens.has(x)).length>=2)return "Kanglish";
+  if(hindiCues.filter(x=>tokens.has(x)).length>=2)return "Hinglish";
+  return ({kn:"Kannada",hi:"Hindi",en:"English"})[String(whisperLanguage||"").toLowerCase()]||"English";
 }
 async function loadPlatformConnections(){
   try{
@@ -274,6 +287,66 @@ function editDraft(action) {
   if(action==="cta"){ if(!/\b(learn more|tell us|share|visit|try|join|reply|comment|sign up)\b/i.test(text))next+=`\n\n${v.brand_id==="saas"?"See what changed and share your questions.":"Share your thoughts or the next step you would take."}`; }
   box.value=next;updateCounts();$("#draft-status-text").textContent="EDIT APPLIED · READY TO REGENERATE";
 }
+function captureSetupStep(){
+  if(setupStep===1){
+    setupAnswers.profileUrl=$("#profile-url")?.value||setupAnswers.profileUrl||"";
+    setupAnswers.discoverStatus=$("#discover-status")?.textContent||"";
+    setupAnswers.discoverHtml=$("#discover-results")?.innerHTML||setupAnswers.discoverHtml||"";
+    const selected=[...document.querySelectorAll("[data-result-index]:checked")].map(x=>window.discoveredPosts?.[+x.dataset.resultIndex]).filter(x=>x?.snippet?.trim());
+    setupAnswers.selectedIndexes=[...document.querySelectorAll("[data-result-index]:checked")].map(x=>+x.dataset.resultIndex);
+    setupAnswers.posts=selected.map(x=>x.snippet.trim()).slice(0,10);
+    if(setupAnswers.posts.length){importedSamplePosts=setupAnswers.posts;voiceMode="posts";}else{importedSamplePosts=null;voiceMode="fresh";}
+  }else if(setupStep===2){
+    setupAnswers.category=$("#setup-category")?.value||creatorCategory;
+    setupAnswers.audience=$("#setup-audience")?.value||"";
+    setupAnswers.brandInfo=$("#setup-brand-info")?.value||"";
+  }else if(setupStep===3){
+    setupAnswers.platform=$("#setup-platform")?.value||"instagram";
+    setupAnswers.language=$("#output-language")?.value||"English";
+  }else if(setupStep===4){setupAnswers.voiceDescription=$("#voice-description")?.value||"";}
+}
+function finishSetup(){
+  captureSetupStep();const panel=$("#voice-recording-panel"),builder=document.querySelector(".voice-builder");
+  if(panel&&builder&&!builder.contains(panel))builder.append(panel);
+  if(setupAnswers.category){creatorCategory=setupAnswers.category;$("#campaign-category").value=creatorCategory;}
+  if(setupAnswers.audience!==undefined)$("#audience").value=setupAnswers.audience;
+  if(setupAnswers.brandInfo!==undefined)$("#brand-knowledge").value=setupAnswers.brandInfo;
+  if(setupAnswers.platform)$("#platform").value=setupAnswers.platform;
+  if(setupAnswers.language){outputLanguage=setupAnswers.language;$("#campaign-language").value=outputLanguage;}
+  if(setupAnswers.voiceDescription)$("#voice-description").value=setupAnswers.voiceDescription;
+  if(setupAnswers.posts?.length){importedSamplePosts=setupAnswers.posts;$("#sample-posts-input").value=setupAnswers.posts.join("\n\n");voiceMode="posts";}
+  else{importedSamplePosts=null;$("#sample-posts-input").value="";voiceMode="fresh";}
+  $("#creator-setup").hidden=true;document.body.classList.remove("is-setup");syncWordLimit();
+  loadScenarios(creatorCategory);renderProfile($("#scenario").value);generateLocal();
+  if(setupAnswers.posts?.length)buildVoiceProfile();
+}
+function showSetupStep(step){
+  captureSetupStep();
+  if(setupStep===4&&step!==4){const panel=$("#voice-recording-panel"),builder=document.querySelector(".voice-builder");if(panel&&builder&&!builder.contains(panel))builder.append(panel);}
+  setupStep=step;const labels=["PROFILE POSTS","YOUR WORK","CHANNEL + LANGUAGE","VOICE MESSAGE"];
+  $("#setup-step-label").textContent=`0${step} / 04 · ${labels[step-1]}`;$("#setup-progress-bar").style.width=`${step*25}%`;
+  const shell=$("#setup-question");shell.classList.remove("question-reenter");void shell.offsetWidth;shell.classList.add("question-reenter");
+  const back=step>1?'<button id="setup-back" class="setup-back" type="button">← Back</button>':'';
+  const actions=(hint,label="Continue →")=>`<div class="setup-actions"><span>${hint}</span><div class="setup-action-buttons">${back}<button id="setup-next" type="button">${label}</button></div></div>`;
+  if(step===1){
+    shell.innerHTML=`<p class="eyebrow">01 · FIND YOUR POSTS</p><h2 id="setup-title">Start with your public profile.</h2><p class="setup-subtitle">Instagram posts use SerpAPI’s Instagram Profile API. X and LinkedIn use the connected account’s official API. Choose only posts you wrote; you can skip this.</p><label class="field-label" for="profile-url">Public profile URL</label><input id="profile-url" class="text-input" type="url" placeholder="https://www.instagram.com/yourbrand/" value="${escapeHtml(setupAnswers.profileUrl||"")}"><button id="discover-posts" class="secondary-action" type="button">Import posts</button><p id="discover-status" class="input-hint" aria-live="polite">${escapeHtml(setupAnswers.discoverStatus||"")}</p><div id="discover-results" class="discover-results">${setupAnswers.discoverHtml||""}</div>${actions("No profile link? Continue and start fresh.")}`;
+    $("#discover-posts").onclick=discoverPublicPosts;
+    setupAnswers.selectedIndexes?.forEach(i=>{const box=shell.querySelector(`[data-result-index="${i}"]`);if(box)box.checked=true;});
+  }else if(step===2){
+    const categories=[["ngo","NGO","Cause, community, action"],["business","Business","Services, expertise, trust"],["creator","Creator","Personality, stories, community"],["product","Product / brand","Benefits, proof, discovery"]];
+    shell.innerHTML=`<p class="eyebrow">02 · YOUR WORK</p><h2 id="setup-title">Who are you creating for?</h2><p class="setup-subtitle">Choose the closest fit, then add only the context this voice needs.</p><div class="creator-types" role="group" aria-label="Creator type">${categories.map(([id,name,desc])=>`<button type="button" data-category="${id}" aria-pressed="${(setupAnswers.category||creatorCategory)===id}"><span>✳</span><strong>${name}</strong><small>${desc}</small></button>`).join("")}</div><label class="field-label" for="setup-audience">Who is this for? <span class="optional-note">Optional</span></label><input id="setup-audience" class="text-input" placeholder="e.g. local families, college students" value="${escapeHtml(setupAnswers.audience||"")}"><label class="field-label" for="setup-brand-info">What should the writer know? <span class="optional-note">Optional</span></label><textarea id="setup-brand-info" rows="3" placeholder="Facts, names, dates, or details to keep accurate">${escapeHtml(setupAnswers.brandInfo||"")}</textarea>${actions("You can change these for any draft.")}`;
+    shell.querySelectorAll("[data-category]").forEach(b=>b.onclick=()=>{creatorCategory=b.dataset.category;setupAnswers.category=creatorCategory;shell.querySelectorAll("[data-category]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));});
+  }else if(step===3){
+    shell.innerHTML=`<p class="eyebrow">03 · CHANNEL + LANGUAGE</p><h2 id="setup-title">Where and how should it sound?</h2><p class="setup-subtitle">Choose the first platform and writing style. A voice recording can detect English, Hindi, or Kannada and update this automatically.</p><div class="setup-controls"><label>First platform<select id="setup-platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></label><label>Draft language<select id="output-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label></div>${actions("You can change these later.")}`;
+    $("#setup-platform").value=setupAnswers.platform||$("#platform").value;$("#output-language").value=setupAnswers.language||outputLanguage;
+  }else{
+    const panel=$("#voice-recording-panel");
+    shell.innerHTML=`<p class="eyebrow">04 · ONE VOICE MESSAGE</p><h2 id="setup-title">Speak naturally. We’ll recognize the language.</h2><p class="setup-subtitle">Record or upload one short message in English, Hindi, or Kannada. Whisper detects it automatically. No checklist and no required voice fields.</p><div id="setup-voice-slot"></div>${actions("Voice guidance is optional.","Open my studio →")}`;
+    $("#setup-voice-slot").append(panel);if(setupAnswers.voiceDescription)$("#voice-description").value=setupAnswers.voiceDescription;
+  }
+  if(step>1)$("#setup-back").onclick=()=>showSetupStep(step-1);
+  $("#setup-next").onclick=()=>{captureSetupStep();if(step<4)showSetupStep(step+1);else finishSetup();};
+}
 async function buildCampaignPack(){
   const v=values();if(!v.topic){$("#draft-status-text").textContent="ADD YOUR IDEA FIRST";$("#topic").focus();return;}campaignAssets={};for(const p of ["instagram","linkedin","x"]){try{const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,platform:p,target_words:p==="x"?Math.min(35,v.target_words):v.target_words})});const d=await r.json();if(!r.ok)throw new Error(d.error);campaignAssets[p]=d.adapted;}catch(e){campaignAssets[p]=`Could not generate this version: ${e.message||"generation service unavailable"}`;}}
   $("#campaign-pack-results").hidden=false;showAsset("instagram");$("#campaign-pack-results").scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -282,8 +355,6 @@ function showAsset(platform){campaignAssets[platform]??=buildDraft({...values(),
 
 $("#scenario").addEventListener("change",setScenario);
 $("#analyze-voice").addEventListener("click",buildVoiceProfile);
-$("#discover-posts").addEventListener("click",discoverPublicPosts);
-$("#use-profile-posts").addEventListener("click",useSelectedProfilePosts);
 $("#transcribe-voice").addEventListener("click",transcribeVoiceAudio);
 
 $("#generate-button").addEventListener("click",()=>generateFromApi());
@@ -309,6 +380,8 @@ document.querySelectorAll("[data-platform]").forEach(b=>b.addEventListener("clic
 $("#asset-output").addEventListener("input",e=>{const active=document.querySelector('[data-platform][aria-selected="true"]')?.dataset.platform;if(active)campaignAssets[active]=e.target.value;});
 $("#copy-asset").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("#asset-output").value);$("#copy-asset").textContent="Copied ";setTimeout(()=>$("#copy-asset").textContent="Copy version ↗",1500);}catch{$("#asset-output").select();document.execCommand("copy");}});
 $("#approve-publish").addEventListener("click",async()=>{if(!currentDraftId||currentDraftPlatform!==values().platform){$("#publish-status").textContent="Save a draft for the selected destination before publishing.";return;}if(!await persistEditedDraft())return;const account=platformAccounts[currentDraftPlatform];if(!account?.connected||!account.capabilities?.can_publish){$("#publish-status").textContent="The selected publishing account is not connected or does not have publishing access.";syncPublishAvailability();return;}$("#approve-publish").disabled=true;$("#publish-status").textContent=`Publishing to ${account.account_label||platformName(currentDraftPlatform)}…`;try{const r=await fetch(`/api/drafts/${currentDraftId}/publish`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved:true,approved_content:$("#adapted-output").value.trim(),asset_url:$("#publish-media-url").value.trim()})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Publishing failed.");$("#publish-status").textContent=`Published to ${account.account_label||platformName(currentDraftPlatform)}${d.post_id?` · ${d.post_id}`:""}.`;currentDraftId=null;currentDraftPlatform=null;syncPublishAvailability();}catch(e){$("#publish-status").textContent=e.message||"Could not reach the publishing service.";syncPublishAvailability();}});
+$("#setup-dismiss").addEventListener("click",finishSetup);
+document.body.classList.add("is-setup");showSetupStep(1);
 renderProfile("streetwear");generateLocal();loadScenarios("product");loadVoiceProfiles();loadPlatformConnections();loadPerformanceSummary();
 fetch("/api/health").then(r=>r.ok?r.json():null).then(s=>{if(s)$("#api-status-label").textContent=s.mode==="sarvam"?"SARVAM CONNECTED":s.mode==="openai-compatible"?"AI CONNECTED":"LOCAL MODE";}).catch(()=>{});
 const oauthParams=new URLSearchParams(location.search);if(oauthParams.get("connected")){$("#publish-status").textContent=`${platformName(oauthParams.get("connected"))} account connected through OAuth.`;history.replaceState(null,"",location.pathname);}else if(oauthParams.get("oauth_error")){$("#publish-status").textContent=`${platformName(oauthParams.get("oauth_error"))} connection did not complete. Check provider credentials, redirect URI, scopes, and review status.`;history.replaceState(null,"",location.pathname);}

@@ -34,6 +34,11 @@
           <div class="issue-stamp"><span>CONTENT</span><strong>01</strong><span>VOICE<br />STUDIO</span><i></i></div>
         </section>
 
+        <section class="creator-setup" id="creator-setup" aria-labelledby="setup-title">
+          <div class="setup-progress"><span id="setup-step-label">01 / 04 · POSTS</span><div><i id="setup-progress-bar"></i></div><button id="setup-dismiss" type="button" aria-label="Skip setup">×</button></div>
+          <div class="setup-question" id="setup-question"></div>
+        </section>
+
         <select id="scenario" class="sr-only" aria-hidden="true" tabindex="-1"><option value="streetwear" selected>Demo profile</option><option value="saas">Demo profile</option></select>
 
         <section class="workspace-grid">
@@ -79,30 +84,16 @@
               <section class="voice-builder" aria-labelledby="voice-builder-title">
                 <div class="voice-builder-heading"><div><span class="note-label">OPTIONAL VOICE GUIDANCE</span><h3 id="voice-builder-title">Add a voice message</h3></div><span id="voice-source-badge" class="source-badge">YOUR VOICE</span></div>
                 <p class="voice-intro">Optional: add a recording or a few posts. The idea below is the only required input.</p>
-                <div class="voice-recording">
+                <div class="voice-recording" id="voice-recording-panel">
                   <label class="field-label" for="voice-audio">One voice message · English, ಕನ್ನಡ, हिन्दी</label>
                   <input id="voice-audio" type="file" accept="audio/*" />
-                  <p class="input-hint">Record 30–90 seconds in a quiet place. Cover these four things:</p>
-                  <div class="voice-checklist" aria-label="Recording requirements">
-                    <label><input class="voice-check" type="checkbox" /> What your organization or brand does</label>
-                    <label><input class="voice-check" type="checkbox" /> Who it is for</label>
-                    <label><input class="voice-check" type="checkbox" /> The point or action this post should carry</label>
-                    <label><input class="voice-check" type="checkbox" /> Verified names, numbers, dates, and preferred tone</label>
-                  </div>
+                  <p class="input-hint">Speak naturally about your work, audience, and message. Whisper detects English, Hindi, or Kannada automatically; no checklist needed.</p>
                   <button id="transcribe-voice" class="secondary-action" type="button">Transcribe with local Whisper</button>
                   <p id="voice-audio-status" class="input-hint" aria-live="polite">The transcript becomes editable context for your draft.</p>
                   <label class="field-label" for="voice-description">Transcript or extra context</label>
                   <textarea id="voice-description" rows="3" placeholder="Transcribed message appears here. You can edit it."></textarea>
                 </div>
                 <details class="voice-extras"><summary>More voice options</summary>
-                  <details class="profile-import"><summary>Import posts from a public profile</summary>
-                    <label class="field-label" for="profile-url">Public profile to import from</label>
-                    <input id="profile-url" class="text-input" type="url" placeholder="Instagram SerpAPI · X or LinkedIn connected account" />
-                    <button id="discover-posts" class="secondary-action" type="button">Import posts</button>
-                    <p id="discover-status" class="input-hint" aria-live="polite"></p>
-                    <div id="discover-results" class="discover-results"></div>
-                    <button id="use-profile-posts" class="secondary-action" type="button" hidden>Use selected posts</button>
-                  </details>
                   <label class="field-label" for="sample-posts-input">Or paste posts you wrote</label>
                   <textarea id="sample-posts-input" rows="4" placeholder="Paste one post per paragraph."></textarea>
                   <label class="field-label" for="voice-tone">Starting tone</label>
@@ -142,6 +133,6 @@
         <footer class="page-footer"><span>VOICEPRINT CONTENT STUDIO</span><span>ONE IDEA. YOUR VOICE.</span><span>01 — 2026</span></footer>
       </main>
     </div>
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
   </body>
 </html>

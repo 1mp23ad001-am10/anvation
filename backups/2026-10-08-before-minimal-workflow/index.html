@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=15" />
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <div class="app-shell">
@@ -34,16 +34,70 @@
           <div class="issue-stamp"><span>CONTENT</span><strong>01</strong><span>VOICE<br />STUDIO</span><i></i></div>
         </section>
 
+        <section class="creator-setup" id="creator-setup" aria-labelledby="setup-title">
+          <div class="setup-progress"><span id="setup-step-label">01 / 05 · YOUR POSTS</span><div><i id="setup-progress-bar"></i></div><button id="setup-dismiss" type="button" aria-label="Close setup">×</button></div>
+          <div class="setup-question" id="setup-question">
+            <p class="eyebrow">A VOICE STUDIO FOR EVERY KIND OF CREATOR</p><h2 id="setup-title">Who are you creating for?</h2>
+            <p class="setup-subtitle">We’ll shape the brief and the post format around your work.</p>
+            <div class="creator-types" role="group" aria-label="Creator type">
+              <button type="button" data-category="ngo"><span>01</span><strong>NGO</strong><small>Cause, community, action</small></button>
+              <button type="button" data-category="business"><span>02</span><strong>Business</strong><small>Service, expertise, trust</small></button>
+              <button type="button" data-category="creator"><span>03</span><strong>Creator</strong><small>Personality, story, community</small></button>
+              <button type="button" data-category="product"><span>04</span><strong>Product / brand</strong><small>Benefits, proof, discovery</small></button>
+            </div>
+            <div class="setup-controls">
+              <label>First platform<select id="setup-platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></label>
+              <label>Write in<select id="output-language"><option value="English">English</option><option value="Kannada">ಕನ್ನಡ · Kannada</option><option value="Hindi">हिन्दी · Hindi</option></select></label>
+            </div>
+            <div class="setup-actions"><span>Have no posts? The next step will ask one question at a time.</span><button id="setup-next" type="button">Set up my voice →</button></div>
+          </div>
+        </section>
+
         <select id="scenario" class="sr-only" aria-hidden="true" tabindex="-1"><option value="streetwear" selected>Demo profile</option><option value="saas">Demo profile</option></select>
 
         <section class="workspace-grid">
           <div class="left-column">
-
+            <section class="panel profile-panel" id="profile">
+              <div class="section-heading"><div><p class="eyebrow">02 / THE BRAND VOICE</p><h2 id="profile-title">Northstar Supply</h2></div><span class="profile-badge">PROFILE</span></div>
+              <p class="profile-summary" id="profile-summary"></p>
+              <section class="voice-builder" aria-labelledby="voice-builder-title">
+                <div class="voice-builder-heading"><div><span class="note-label">MAKE THIS VOICE YOURS</span><h3 id="voice-builder-title">Where should we learn your style?</h3></div><span id="voice-source-badge" class="source-badge">DEMO PROFILE</span></div>
+                <div class="voice-mode-switch" role="group" aria-label="Choose how to define your writing style">
+                  <button type="button" data-voice-mode="demo" aria-pressed="true">Use sample brand</button>
+                  <button type="button" data-voice-mode="posts" aria-pressed="false">I have posts</button>
+                  <button type="button" data-voice-mode="fresh" aria-pressed="false">No posts yet</button>
+                </div>
+                <div id="voice-demo-panel" class="voice-mode-panel">
+                  <p>Start with the selected demo brand and its six example posts. Switch modes to bring your own writing or describe your voice.</p>
+                </div>
+                <div id="voice-posts-panel" class="voice-mode-panel" hidden>
+                  <label class="field-label" for="sample-posts-input">Paste 1–10 posts (separate them with a blank line)</label>
+                  <textarea id="sample-posts-input" rows="4" placeholder="Paste captions or posts you wrote. A few examples are enough to begin."></textarea>
+                  <p class="input-hint">Use public posts you own or have permission to use. We analyze the text you provide.</p>
+                </div>
+                <div id="voice-fresh-panel" class="voice-mode-panel" hidden>
+                  <label class="field-label" for="voice-description">Describe how you want to sound</label>
+                  <textarea id="voice-description" rows="3" placeholder="For example: warm and direct, like I’m sharing a useful tip with a friend. Keep sentences short."></textarea>
+              <label class="field-label" for="voice-tone">Pick a starting tone</label>
+                  <select id="voice-tone" class="voice-select"><option value="warm and approachable">Warm and approachable</option><option value="bold and playful">Bold and playful</option><option value="expert and precise">Expert and precise</option><option value="minimal and direct">Minimal and direct</option><option value="witty and conversational">Witty and conversational</option></select>
+                  <p class="input-hint">Choose a starter voice or describe your own. You can review and edit every draft.</p>
+                </div>
+                <div class="voice-preferences">
+                  <label><span class="field-label">Words or phrases I like</span><input id="favorite-words" type="text" placeholder="e.g. thoughtful, built for real life" /></label>
+                  <label><span class="field-label">Words or claims to avoid</span><input id="avoid-words" type="text" placeholder="e.g. revolutionary, guaranteed" /></label>
+                </div>
+                <div class="voice-builder-footer"><p id="voice-analysis-status" aria-live="polite">Demo voice is ready. You can switch to your own examples or start from preferences.</p><button id="analyze-voice" class="secondary-action" type="button">Build voice profile</button></div>
+                <div class="voice-save-row"><label class="field-label" for="saved-voice-select">Starter and saved voices</label><select id="saved-voice-select"><option value="">Choose a voice profile</option></select><label class="field-label" for="voice-profile-name">Name your custom voice</label><input id="voice-profile-name" type="text" placeholder="e.g. Founder notes, Kannada community voice" /><button id="save-voice-profile" class="secondary-action" type="button">Save current voice</button></div>
+              </section>
+              <div class="metrics-grid" id="metrics-grid"></div>
+              <div class="voice-notes"><div><span class="note-label">SOUNDS LIKE</span><strong id="tone-notes"></strong></div><div><span class="note-label">DO MORE OF</span><strong id="dos-notes"></strong></div><div><span class="note-label">SKIP</span><strong id="donts-notes"></strong></div></div>
+              <details class="sample-posts" id="library"><summary>View the 6 sample posts behind this profile <span>＋</span></summary><ol id="sample-list"></ol></details>
+            </section>
 
             <section class="panel controls-panel">
-              <div class="section-heading compact"><div><p class="eyebrow">YOUR IDEA</p><h2>Shape the draft</h2></div></div>
+              <div class="section-heading compact"><div><p class="eyebrow">03 / YOUR IDEA</p><h2>Shape the draft</h2></div><span class="step-marker">03</span></div>
               <label class="field-label" for="topic">What do you want to say?</label>
-              <textarea id="topic" rows="2" required placeholder="Write your idea, story, or announcement…"></textarea>
+              <textarea id="topic" rows="2" placeholder="Write your idea, story, or announcement…"></textarea>
               <div class="control-row">
                 <label class="control-block"><span class="field-label">Platform</span><select id="platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></label>
                 <label class="control-block"><span class="field-label">Write in</span><select id="campaign-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label>
@@ -72,54 +126,10 @@
               </details>
               <button id="generate-button" class="generate-button" type="button">Generate draft</button>
             </section>
-
-            <section class="panel profile-panel" id="profile">
-              <div class="section-heading"><div><p class="eyebrow">OPTIONAL VOICE</p><h2 id="profile-title">Your voice</h2></div><span class="profile-badge">VOICE</span></div>
-              <p class="profile-summary" id="profile-summary"></p>
-              <section class="voice-builder" aria-labelledby="voice-builder-title">
-                <div class="voice-builder-heading"><div><span class="note-label">OPTIONAL VOICE GUIDANCE</span><h3 id="voice-builder-title">Add a voice message</h3></div><span id="voice-source-badge" class="source-badge">YOUR VOICE</span></div>
-                <p class="voice-intro">Optional: add a recording or a few posts. The idea below is the only required input.</p>
-                <div class="voice-recording">
-                  <label class="field-label" for="voice-audio">One voice message · English, ಕನ್ನಡ, हिन्दी</label>
-                  <input id="voice-audio" type="file" accept="audio/*" />
-                  <p class="input-hint">Record 30–90 seconds in a quiet place. Cover these four things:</p>
-                  <div class="voice-checklist" aria-label="Recording requirements">
-                    <label><input class="voice-check" type="checkbox" /> What your organization or brand does</label>
-                    <label><input class="voice-check" type="checkbox" /> Who it is for</label>
-                    <label><input class="voice-check" type="checkbox" /> The point or action this post should carry</label>
-                    <label><input class="voice-check" type="checkbox" /> Verified names, numbers, dates, and preferred tone</label>
-                  </div>
-                  <button id="transcribe-voice" class="secondary-action" type="button">Transcribe with local Whisper</button>
-                  <p id="voice-audio-status" class="input-hint" aria-live="polite">The transcript becomes editable context for your draft.</p>
-                  <label class="field-label" for="voice-description">Transcript or extra context</label>
-                  <textarea id="voice-description" rows="3" placeholder="Transcribed message appears here. You can edit it."></textarea>
-                </div>
-                <details class="voice-extras"><summary>More voice options</summary>
-                  <details class="profile-import"><summary>Import posts from a public profile</summary>
-                    <label class="field-label" for="profile-url">Instagram, X, or LinkedIn profile URL</label>
-                    <input id="profile-url" class="text-input" type="url" placeholder="https://www.instagram.com/yourbrand/" />
-                    <button id="discover-posts" class="secondary-action" type="button">Find posts</button>
-                    <p id="discover-status" class="input-hint" aria-live="polite"></p>
-                    <div id="discover-results" class="discover-results"></div>
-                    <button id="use-profile-posts" class="secondary-action" type="button" hidden>Use selected posts</button>
-                  </details>
-                  <label class="field-label" for="sample-posts-input">Or paste posts you wrote</label>
-                  <textarea id="sample-posts-input" rows="4" placeholder="Paste one post per paragraph."></textarea>
-                  <label class="field-label" for="voice-tone">Starting tone</label>
-                  <select id="voice-tone" class="voice-select"><option value="warm and approachable">Warm and approachable</option><option value="bold and playful">Bold and playful</option><option value="expert and precise">Expert and precise</option><option value="minimal and direct">Minimal and direct</option><option value="witty and conversational">Witty and conversational</option></select>
-                  <div class="voice-preferences"><label><span class="field-label">Words I like (optional)</span><input id="favorite-words" type="text" placeholder="e.g. thoughtful" /></label><label><span class="field-label">Words or claims to avoid (optional)</span><input id="avoid-words" type="text" placeholder="e.g. guaranteed" /></label></div>
-                  <div class="voice-builder-footer"><p id="voice-analysis-status" aria-live="polite">Voice guidance is optional.</p><button id="analyze-voice" class="secondary-action" type="button">Build voice profile</button></div>
-                  <div class="voice-save-row"><label class="field-label" for="saved-voice-select">Saved voices</label><select id="saved-voice-select"><option value="">Choose a voice profile</option></select><label class="field-label" for="voice-profile-name">Name this voice</label><input id="voice-profile-name" type="text" placeholder="e.g. Community voice" /><button id="save-voice-profile" class="secondary-action" type="button">Save voice</button></div>
-                </details>
-              </section>
-              <details class="voice-insights"><summary>Voice analysis and example posts</summary><div class="metrics-grid" id="metrics-grid"></div>
-              <div class="voice-notes"><div><span class="note-label">SOUNDS LIKE</span><strong id="tone-notes"></strong></div><div><span class="note-label">DO MORE OF</span><strong id="dos-notes"></strong></div><div><span class="note-label">SKIP</span><strong id="donts-notes"></strong></div></div>
-              <details class="sample-posts" id="library"><summary>View the sample posts <span>＋</span></summary><ol id="sample-list"></ol></details></details>
-            </section>
           </div>
 
           <section class="panel compare-panel" aria-live="polite">
-            <div class="section-heading output-heading"><div><p class="eyebrow">YOUR DRAFT</p><h2>Review and edit</h2></div><span class="draft-status"><i></i> <span id="draft-status-text">READY</span></span></div>
+            <div class="section-heading output-heading"><div><p class="eyebrow">04 / SIDE BY SIDE</p><h2>Your draft</h2></div><span class="draft-status"><i></i> <span id="draft-status-text">READY</span></span></div>
             <div class="compare-grid">
               <article class="draft-card adapted-card"><div class="draft-card-head"><div><span class="draft-kicker">VOICE ADAPTED</span><h3 id="adapted-brand-title">Northstar Supply</h3></div><span class="draft-icon adapted-icon"></span></div><div class="draft-meta"><span class="post-avatar adapted-avatar" id="brand-avatar">N</span><span><strong id="adapted-handle">northstarsupply</strong><small id="adapted-platform">INSTAGRAM</small></span></div><label class="sr-only" for="adapted-output">Edit the adapted draft</label><textarea id="adapted-output" class="draft-text adapted-text" spellcheck="true"></textarea><div class="editor-toolbar" aria-label="Draft editing actions"><button type="button" data-edit="rewrite">Rewrite</button><button type="button" data-edit="clarify">Improve clarity</button><button type="button" data-edit="expand">Expand</button><button type="button" data-edit="shorten">Shorten</button><button type="button" data-edit="cta">Add CTA</button></div><div class="draft-footer"><span>EDITABLE · YOUR BRAND VOICE</span><span id="adapted-words">0 WORDS</span></div></article>
             </div>
@@ -142,6 +152,6 @@
         <footer class="page-footer"><span>VOICEPRINT CONTENT STUDIO</span><span>ONE IDEA. YOUR VOICE.</span><span>01 — 2026</span></footer>
       </main>
     </div>
-    <script src="app.js?v=21"></script>
+    <script src="app.js?v=19"></script>
   </body>
 </html>

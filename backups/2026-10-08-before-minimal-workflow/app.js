@@ -21,8 +21,10 @@ let campaignAssets = {};
 let voiceMode = "fresh";
 let customVoiceProfile = null;
 let creatorCategory = "product";
-let importedSamplePosts = null;
+let setupStep = 1;
+let setupHasPosts = null;
 let outputLanguage = "English";
+let setupAnswers = {};
 let scenarioCatalog = {};
 let voiceProfiles = [];
 let currentCampaignId = null;
@@ -67,7 +69,7 @@ function renderProfile(key) {
   if(voiceMode==="posts")$("#library summary").firstChild.textContent=`View ${samplePosts.length||"your"} sample posts behind this profile `;
   $("#sample-list").innerHTML=samplePosts.map(s=>`<li>${escapeHtml(s)}</li>`).join("");
 }
-function samplePostInput(){return importedSamplePosts || $("#sample-posts-input").value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean).slice(0,10);}
+function samplePostInput(){return $("#sample-posts-input").value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean).slice(0,10);}
 function values() { creatorCategory=$("#campaign-category").value;outputLanguage=$("#campaign-language").value;return { brand_id:$("#scenario").value||"streetwear", profile_id:selectedVoiceProfileId, category:creatorCategory, scenario_id:$("#scenario-id").value, campaign_intent:$("#campaign-intent").value, target_words:+$("#target-words").value, energy:+$("#energy").value, language:outputLanguage, optimization:$("#optimization").value, keywords:$("#campaign-keywords").value.trim(), keyword_context:$("#keyword-context").value.trim(), topic:$("#topic").value.trim(), platform:$("#platform").value, length:"medium", formality:+$("#formality").value, audience:$("#audience").value.trim(), campaign_name:"", campaign_goal:$("#campaign-goal").value.trim(), knowledge:$("#brand-knowledge").value.trim(), style_guide:$("#style-guide").value.trim(), voice_mode:voiceMode, sample_posts:voiceMode==="posts"?samplePostInput():[], voice_description:$("#voice-description").value.trim(), voice_tone:$("#voice-tone").value, favorite_words:$("#favorite-words").value.trim(), avoid_words:$("#avoid-words").value.trim() }; }
 function cleanSubject(topic) { return topic.trim().replace(/[.!?]+$/,"" ) || "Our latest update"; }
 function formalityStyle(value, saas) {
@@ -104,7 +106,7 @@ function buildDraft(v, adapted=true, editSeed="") {
     else if(/warm|approachable/.test(tone))opening="A note from us, for you.";
   }
   if(v.length==="short") { body=body.split(/(?<=[.!?])\s+/).slice(0,1).join(" "); close=""; }
-  if(v.length==="long") body += saas?" We shaped this around the moments that slow customer teams down, so the next handoff has more useful context.":" Add a relevant detail from the brief, explain why it matters to the audience, and make the next step clear.";
+  if(v.length==="long") body += saas?" We shaped this around the moments that slow customer teams down, so the next handoff has more useful context.":" Wear it your way, take the side streets, and make the everyday yours.";
   if(v.platform==="x" && words(`${opening} ${body} ${close}`).length>45) body=body.split(/(?<=[.!?])\s+/).slice(0,2).join(" ");
   let text=[opening,body,close].filter(Boolean).join("\n\n");
   if(adapted && !saas && v.platform==="instagram") text += "";
@@ -177,7 +179,7 @@ async function analyzeProfile(key) {
     if(d.metrics){const m=d.metrics;$("#metrics-grid").innerHTML=[[m.average_sentence_length,"WORDS / SENTENCE"],[m.average_hashtags_per_post,"HASHTAGS / POST"],[`${m.question_ratio_percent}%`,"POSTS WITH A QUESTION"]].map(([v,l])=>`<div class="metric"><strong>${escapeHtml(v)}</strong><span>${l}</span></div>`).join("");}
   } catch { /* Local profile remains available. */ }
 }
-function setVoiceMode(mode){voiceMode=mode;customVoiceProfile=null;$("#voice-source-badge").textContent=mode==="posts"?"YOUR POSTS":"YOUR VOICE";renderProfile($("#scenario").value);generateLocal();}
+function setVoiceMode(mode){voiceMode=mode;customVoiceProfile=null;document.querySelectorAll("[data-voice-mode]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.voiceMode===mode)));$("#voice-demo-panel").hidden=mode!=="demo";$("#voice-posts-panel").hidden=mode!=="posts";$("#voice-fresh-panel").hidden=mode!=="fresh";$("#voice-source-badge").textContent=mode==="demo"?"DEMO PROFILE":mode==="posts"?"YOUR POSTS":"PREFERENCE-BASED";$("#voice-analysis-status").textContent=mode==="demo"?"Demo voice is ready. You can switch to your own examples or start from preferences.":mode==="posts"?"Paste a few posts, then build a profile from your writing.":"No post history needed. Describe your style and preferred words.";renderProfile($("#scenario").value);generateLocal();}
 async function buildVoiceProfile(){const v=values();if(voiceMode==="posts"&&!v.sample_posts.length){$("#voice-analysis-status").textContent="Paste at least one authored post, or start with preferences.";return;}if(voiceMode==="fresh"&&!v.voice_description&&!v.favorite_words&&!v.avoid_words&&!v.voice_tone){$("#voice-analysis-status").textContent="Describe your style or add preferred or avoided words first.";return;}$("#voice-analysis-status").textContent="Building your voice profile…";try{const r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,brand_id:v.brand_id})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Profile analysis unavailable");customVoiceProfile={...d.profile};const metrics=d.metrics||{};if(d.metrics)$("#metrics-grid").innerHTML=[[metrics.average_sentence_length,"WORDS / SENTENCE"],[metrics.average_hashtags_per_post,"HASHTAGS / POST"],[`${metrics.question_ratio_percent}%`,"POSTS WITH A QUESTION"]].map(([x,l])=>`<div class="metric"><strong>${escapeHtml(x)}</strong><span>${l}</span></div>`).join("");$("#voice-analysis-status").textContent=d.mode==="ai"?"AI-assisted profile ready. Review and edit its traits.":"Profile ready. Save it to reuse this voice.";$("#api-status-label").textContent=d.mode==="ai"?"AI CONNECTED":"LOCAL MODE";renderProfile(v.brand_id);generateLocal();}catch(e){$("#voice-analysis-status").textContent=e.message||"Could not build the profile. Your inputs are still available.";}}
 async function discoverPublicPosts(){
   const urls=$("#profile-url").value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);
@@ -192,29 +194,20 @@ async function discoverPublicPosts(){
     if(!results.length){$("#discover-status").textContent=`No posts returned by the profile API.${failures?` ${failures}`:""} Continue with a recording or voice description.`;return;}
     $("#discover-status").textContent=`${results.length} posts from the selected profile API. Select only posts you wrote.${failures?` ${failures}`:""}`;
     $("#discover-results").innerHTML=results.map((x,i)=>`<label class="discover-item"><input type="checkbox" data-result-index="${i}"><span><strong>${escapeHtml(x.platform||"").toUpperCase()} · ${escapeHtml(x.title||"Public post excerpt")}</strong><span>${escapeHtml(x.snippet||"")}</span><a href="${escapeHtml(x.link||"#")}" target="_blank" rel="noopener">Open source ↗</a></span></label>`).join("");
-    $("#use-profile-posts").hidden=false;
   }catch(e){$("#discover-status").textContent=e.message||"Search unavailable. Continue without search.";}
-}
-function useSelectedProfilePosts(){
-  const selected=[...document.querySelectorAll("[data-result-index]:checked")].map(x=>window.discoveredPosts?.[+x.dataset.resultIndex]).filter(x=>x?.snippet?.trim());
-  if(!selected.length){$("#discover-status").textContent="Select at least one post first.";return;}
-  importedSamplePosts=selected.map(x=>x.snippet.trim()).slice(0,10);$("#sample-posts-input").value=importedSamplePosts.join("\n\n");
-  voiceMode="posts";$("#voice-source-badge").textContent="YOUR POSTS";$("#discover-status").textContent=`${importedSamplePosts.length} selected posts are ready as separate examples.`;
-  renderProfile($("#scenario").value);generateLocal();
 }
 async function transcribeVoiceAudio(){
   const file=$("#voice-audio")?.files?.[0];
   if(!file){$("#voice-audio-status").textContent="Choose an audio recording first.";return;}
-  if(document.querySelectorAll(".voice-check:checked").length!==4){$("#voice-audio-status").textContent="Check all four items so Whisper has the details your draft needs.";return;}
+  const target=setupHasPosts?$("#setup-authored-posts"):$("#setup-style-answer");
   $("#transcribe-voice").disabled=true;$("#voice-audio-status").textContent="Transcribing on this computer with Whisper…";
   try{
     const form=new FormData();form.append("file",file);
     const response=await fetch("/api/transcribe",{method:"POST",body:form});const data=await response.json();
     if(!response.ok)throw new Error(data.error||"Transcription failed.");
-    $("#voice-description").value=[$("#voice-description").value.trim(),data.text].filter(Boolean).join("\n\n");
-    voiceMode="fresh";generateLocal();
+    target.value=[target.value.trim(),data.text].filter(Boolean).join("\n\n");
     const labels={kn:"Kannada",hi:"Hindi",en:"English"};
-    $("#voice-audio-status").textContent=`Transcribed in ${labels[data.language]||data.language}. Edit the transcript below if needed.`;
+    $("#voice-audio-status").textContent=`Transcribed in ${labels[data.language]||data.language}. The transcript is added to your voice input.`;
   }catch(error){$("#voice-audio-status").textContent=error.message||"Could not transcribe this recording.";}
   finally{$("#transcribe-voice").disabled=false;}
 }
@@ -238,7 +231,7 @@ async function loadPlatformConnections(){
     document.querySelectorAll("[data-import-platform]").forEach(b=>b.onclick=()=>importConnectedPosts(b.dataset.importPlatform));
   }catch{$("#platform-connection-list").textContent="Platform connection status is unavailable.";}
 }
-async function importConnectedPosts(platform){try{$("#publish-status").textContent=`Importing authorized ${platformName(platform)} posts…`;const r=await fetch(`/api/platforms/${platform}/posts`);const d=await r.json();if(!r.ok)throw new Error(d.error||"Provider post history unavailable");if(!d.posts?.length)throw new Error("No authored post text was returned. You can paste examples manually.");importedSamplePosts=d.posts.map(x=>x.text).filter(Boolean).slice(0,10);$("#sample-posts-input").value=importedSamplePosts.join("\n\n");setVoiceMode("posts");renderProfile($("#scenario").value);await buildVoiceProfile();$("#publish-status").textContent=`Imported ${d.posts.length} authored posts from ${platformName(platform)}. Original text is preserved in the sample field.`;}catch(e){$("#publish-status").textContent=e.message||"Could not import posts.";}}
+async function importConnectedPosts(platform){try{$("#publish-status").textContent=`Importing authorized ${platformName(platform)} posts…`;const r=await fetch(`/api/platforms/${platform}/posts`);const d=await r.json();if(!r.ok)throw new Error(d.error||"Provider post history unavailable");if(!d.posts?.length)throw new Error("No authored post text was returned. You can paste examples manually.");$("#sample-posts-input").value=d.posts.map(x=>x.text).join("\n\n");setVoiceMode("posts");renderProfile($("#scenario").value);await buildVoiceProfile();$("#publish-status").textContent=`Imported ${d.posts.length} authored posts from ${platformName(platform)}. Original text is preserved in the sample field.`;}catch(e){$("#publish-status").textContent=e.message||"Could not import posts.";}}
 async function loadPerformanceSummary(){
   try{const r=await fetch("/api/performance");const d=await r.json();const target=$("#performance-summary");
     if(!d.observations){target.textContent="No provider-reported observations yet. Connect a supported account and sync metrics when the official API is configured.";return;}
@@ -252,7 +245,7 @@ async function saveVoiceProfile(){
   try{const r=await fetch("/api/voice-profiles",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.error);selectedVoiceProfileId=d.id;$("#voice-analysis-status").textContent="Voice profile saved on this device.";await loadVoiceProfiles();$("#saved-voice-select").value=d.id;}
   catch(e){$("#voice-analysis-status").textContent=e.message||"Could not save this profile.";}
 }
-function applyVoiceProfile(id){const p=voiceProfiles.find(x=>x.id===id);if(!p)return;selectedVoiceProfileId=p.is_preset?null:p.id;creatorCategory=p.category;$("#campaign-category").value=p.category;$("#voice-description").value=p.summary||"";$("#voice-tone").value=p.tone||"warm and approachable";$("#favorite-words").value=p.favorite_words||"";$("#avoid-words").value=p.avoid_words||"";if(p.sample_posts?.length){voiceMode="posts";importedSamplePosts=p.sample_posts;$("#sample-posts-input").value=p.sample_posts.join("\n\n");}else voiceMode="fresh";$("#voice-source-badge").textContent=voiceMode==="posts"?"YOUR POSTS":"YOUR VOICE";customVoiceProfile={summary:p.summary,tone:p.tone,dos:p.favorite_words?`Use naturally: ${p.favorite_words}`:"Follow this saved voice.",donts:p.avoid_words?`Avoid: ${p.avoid_words}`:""};loadScenarios(creatorCategory);renderProfile($("#scenario").value);generateLocal();}
+function applyVoiceProfile(id){const p=voiceProfiles.find(x=>x.id===id);if(!p)return;selectedVoiceProfileId=p.is_preset?null:p.id;creatorCategory=p.category;$("#campaign-category").value=p.category;$("#voice-description").value=p.summary||"";$("#voice-tone").value=p.tone||"warm and approachable";$("#favorite-words").value=p.favorite_words||"";$("#avoid-words").value=p.avoid_words||"";if(p.sample_posts?.length){voiceMode="posts";$("#sample-posts-input").value=p.sample_posts.join("\n\n");}else voiceMode="fresh";document.querySelectorAll("[data-voice-mode]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.voiceMode===voiceMode)));$("#voice-demo-panel").hidden=true;$("#voice-posts-panel").hidden=voiceMode!=="posts";$("#voice-fresh-panel").hidden=voiceMode!=="fresh";customVoiceProfile={summary:p.summary,tone:p.tone,dos:p.favorite_words?`Use naturally: ${p.favorite_words}`:"Follow this saved voice.",donts:p.avoid_words?`Avoid: ${p.avoid_words}`:""};loadScenarios(creatorCategory);renderProfile($("#scenario").value);generateLocal();}
 function setScenario() {
   const key=$("#scenario").value; if(!brands[key])return;
   const saas=key==="saas";$("#platform").value=brands[key].platform;$("#formality").value=saas?68:24;$("#energy").value=saas?38:65;
@@ -264,28 +257,81 @@ function editDraft(action) {
   const paragraphs=text.split(/\n\s*\n/); let next=text;
   if(action==="rewrite"){ next=buildDraft(v,true); }
   if(action==="clarify"){ next=text.replace(/\butilize\b/gi,"use").replace(/\bin order to\b/gi,"to").replace(/\b(the next step|the goal):/gi,"$1 is").replace(/\s+/g," ").replace(/\n\s*/g,"\n\n"); }
-  if(action==="expand"){ next=`${text}\n\n${v.brand_id==="saas"?"That means teams can spend less time rebuilding context and more time responding to customers.":"Add one relevant detail, explain why it matters to your audience, and make the next step clear."}`; }
+  if(action==="expand"){ next=`${text}\n\n${v.brand_id==="saas"?"That means teams can spend less time rebuilding context and more time responding to customers.":"Easy layers, considered details, and room to make the day your own."}`; }
   if(action==="shorten"){ next=paragraphs.slice(0,2).join("\n\n").replace(/\s+/g," ").replace(/\n /g,"\n"); }
-  if(action==="cta"){ if(!/\b(learn more|tell us|share|visit|try|join|reply|comment|sign up)\b/i.test(text))next+=`\n\n${v.brand_id==="saas"?"See what changed and share your questions.":"Share your thoughts or the next step you would take."}`; }
+  if(action==="cta"){ if(!/\b(shop|explore|learn more|tell us|see what|discover|visit|try)\b/i.test(text))next+=`\n\n${v.brand_id==="saas"?"See what changed and share your questions.":"Explore the collection and find your next everyday layer."}`; }
   box.value=next;updateCounts();$("#draft-status-text").textContent="EDIT APPLIED · READY TO REGENERATE";
 }
 async function buildCampaignPack(){
   const v=values();if(!v.topic){$("#draft-status-text").textContent="ADD YOUR IDEA FIRST";$("#topic").focus();return;}campaignAssets={};for(const p of ["instagram","linkedin","x"]){try{const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...v,platform:p,target_words:p==="x"?Math.min(35,v.target_words):v.target_words})});const d=await r.json();if(!r.ok)throw new Error(d.error);campaignAssets[p]=d.adapted;}catch(e){campaignAssets[p]=`Could not generate this version: ${e.message||"generation service unavailable"}`;}}
   $("#campaign-pack-results").hidden=false;showAsset("instagram");$("#campaign-pack-results").scrollIntoView({behavior:"smooth",block:"nearest"});
 }
+function showSetupStep(step){
+  const shell=$("#setup-question");
+  if(setupStep===1&&$("#profile-url")){
+    setupAnswers.profileUrl=$("#profile-url").value;
+    setupAnswers.discoverStatus=$("#discover-status").textContent;
+    setupAnswers.discoverHtml=$("#discover-results").innerHTML;
+    setupAnswers.selectedExcerpts=[...document.querySelectorAll("[data-result-index]:checked")].map(x=>+x.dataset.resultIndex);
+    const selected=setupAnswers.selectedExcerpts.map(i=>window.discoveredPosts?.[i]).filter(x=>x?.snippet);
+    if(selected.length){setupAnswers.posts=selected.map(x=>x.snippet).join("\n\n");setupHasPosts=true;$("#sample-posts-input").value=setupAnswers.posts;}
+  }
+  if(setupStep===3 && $("#setup-platform")) setupAnswers.platform=$("#setup-platform").value;
+  if(setupStep===3 && $("#output-language")) setupAnswers.language=$("#output-language").value;
+  if(setupStep===4) setupAnswers.hasPosts=setupHasPosts;
+  if(setupStep===5){setupAnswers.style=$("#setup-style-answer")?.value||"";setupAnswers.posts=$("#setup-authored-posts")?.value||"";}
+  setupStep=step;
+  const steps=["YOUR POSTS","YOUR WORK","YOUR CHANNEL","YOUR HISTORY","YOUR VOICE"];
+  $("#setup-step-label").textContent=`0${step} / 05 · ${steps[step-1]}`;
+  $("#setup-progress-bar").style.width=`${step*20}%`;
+  shell.classList.remove("question-reenter");void shell.offsetWidth;shell.classList.add("question-reenter");
+  const back=step>1?'<button id="setup-back" class="setup-back" type="button">← Back</button>':'';
+  const actions=(hint,label)=>`<div class="setup-actions"><span>${hint}</span><div class="setup-action-buttons">${back}<button id="setup-next" type="button">${label}</button></div></div>`;
+  if(step===1){
+    shell.innerHTML=`<p class="eyebrow">START WITH YOUR PUBLIC PROFILE</p><h2 id="setup-title">Shape your voice from your writing.</h2><p class="setup-subtitle">Add a profile link, review its posts, and choose the ones you wrote.</p><label class="field-label" for="profile-url">Public profile URL</label><textarea id="profile-url" rows="2" placeholder="https://www.instagram.com/yourbrand/">${escapeHtml(setupAnswers.profileUrl||"")}</textarea><button id="discover-posts" class="secondary-action" type="button">Fetch posts</button><p id="discover-status" class="input-hint" aria-live="polite">${escapeHtml(setupAnswers.discoverStatus||"")}</p><div id="discover-results" class="discover-results">${setupAnswers.discoverHtml||""}</div>${actions("You can skip search and start with your own description.","Continue →")}`;
+    setupAnswers.selectedExcerpts?.forEach(i=>{const checkbox=shell.querySelector(`[data-result-index="${i}"]`);if(checkbox)checkbox.checked=true;});
+    $("#discover-posts").textContent="Search posts";$("#discover-posts").onclick=discoverPublicPosts;
+  }
+  if(step===2){
+    const categories=[["ngo","NGO","Cause, community, action"],["business","Business","Service, expertise, trust"],["creator","Influencer / creator","Personality, story, community"],["product","Product / brand","Benefits, proof, discovery"]];
+    shell.innerHTML=`<p class="eyebrow">A VOICE STUDIO FOR EVERY KIND OF CREATOR</p><h2 id="setup-title">Who are you creating for?</h2><p class="setup-subtitle">Choose the audience type that best describes this voice.</p><div class="creator-types" role="group" aria-label="Audience type">${categories.map(([id,name,desc],i)=>`<button type="button" data-category="${id}" aria-pressed="${creatorCategory===id}"><span>0${i+1}</span><strong>${name}</strong><small>${desc}</small></button>`).join("")}</div>${actions("You can change this for another campaign.","Continue →")}`;
+    shell.querySelectorAll("[data-category]").forEach(b=>b.onclick=()=>{creatorCategory=b.dataset.category;$("#campaign-category").value=creatorCategory;shell.querySelectorAll("[data-category]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));loadScenarios(creatorCategory);});
+  }
+  if(step===3){
+    shell.innerHTML=`<p class="eyebrow">YOUR AUDIENCE IS ALREADY THERE</p><h2 id="setup-title">Where do you want to publish?</h2><p class="setup-subtitle">Pick the first platform and the language mode for your drafts.</p><div class="setup-controls"><label>First platform<select id="setup-platform">${[["instagram","Instagram"],["linkedin","LinkedIn"],["x","X"]].map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select></label><label>Language and script<select id="output-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label></div>${actions("You can create versions for other platforms later.","Continue →")}`;
+    $("#setup-platform").value=setupAnswers.platform||$("#platform").value;$("#output-language").value=setupAnswers.language||outputLanguage;
+  }
+  if(step===4){
+    if(setupHasPosts===null&&setupAnswers.posts)setupHasPosts=true;
+    shell.innerHTML=`<p class="eyebrow">YOUR VOICE, YOUR WAY</p><h2 id="setup-title">Do you have posts to use as examples?</h2><p class="setup-subtitle">Only use writing you own or have permission to use. Imported profile posts may be incomplete.</p><div class="history-options"><button type="button" data-history="posts" aria-pressed="${setupHasPosts===true}"><strong>I have posts</strong><small>Paste authored examples or review imported posts.</small></button><button type="button" data-history="fresh" aria-pressed="${setupHasPosts===false}"><strong>Start fresh</strong><small>Describe the voice you want; no post history is needed.</small></button></div>${actions("Your answer is kept if you go back.","Continue →")}`;
+    shell.querySelectorAll("[data-history]").forEach(b=>b.onclick=()=>{setupHasPosts=b.dataset.history==="posts";shell.querySelectorAll("[data-history]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));});
+  }
+  if(step===5){
+    const question="Describe how you want your writing to sound.";
+    const field=setupHasPosts?`<label class="field-label" for="setup-authored-posts">Paste a few posts you wrote</label><textarea id="setup-authored-posts" rows="5" placeholder="Separate posts with a blank line.">${escapeHtml(setupAnswers.posts||"")}</textarea>`:`<label class="field-label" for="setup-style-answer">${question}</label><textarea id="setup-style-answer" rows="4" placeholder="Describe the style, audience, and message. For example: warm, direct, rooted in local community.">${escapeHtml(setupAnswers.style||"")}</textarea>`;
+    shell.innerHTML=`<p class="eyebrow">${setupHasPosts?"LET YOUR WRITING SHOW US HOW YOU SPEAK":"NO HISTORY NEEDED · START WITH YOUR VOICE"}</p><h2 id="setup-title">${setupHasPosts?"Review your writing samples.":question}</h2><p class="setup-subtitle">${setupHasPosts?"Imported profile posts are included. Add or edit examples if you like.":"Your description or recording will guide the voice of each draft."}</p>${field}<div class="voice-recording"><label class="field-label" for="voice-audio">Add a voice recording</label><input id="voice-audio" type="file" accept="audio/*" /><button id="transcribe-voice" class="secondary-action" type="button">Transcribe with local Whisper</button><p id="voice-audio-status" class="input-hint" aria-live="polite">Kannada, Hindi, and English are detected automatically. Audio is transcribed locally; the transcript is sent to your configured writing model when you generate.</p></div>${actions("Your voice stays editable.","Enter the studio →")}`;
+    $("#transcribe-voice").onclick=transcribeVoiceAudio;
+  }
+  if(step>1) $("#setup-back").onclick=()=>showSetupStep(step-1);
+  $("#setup-next").onclick=()=>{
+    if(step===3){setupAnswers.platform=$("#setup-platform").value;setupAnswers.language=$("#output-language").value;$("#platform").value=setupAnswers.platform;syncWordLimit();outputLanguage=setupAnswers.language;$("#campaign-language").value=outputLanguage;}
+    if(step===4&&setupHasPosts===null){$("#setup-question .setup-subtitle").textContent="Choose whether you have authored posts or want to start fresh.";return;}
+    if(step<5){showSetupStep(step+1);return;}
+    if(setupHasPosts===true){setVoiceMode("posts");$("#sample-posts-input").value=$("#setup-authored-posts").value||$("#sample-posts-input").value;}else{setVoiceMode("fresh");$("#voice-description").value=$("#setup-style-answer").value;}
+    $("#creator-setup").hidden=true;document.body.classList.remove("is-setup");$("#campaign-category").value=creatorCategory;loadScenarios(creatorCategory);renderProfile($("#scenario").value);generateLocal();
+    if(setupHasPosts===true&&samplePostInput().length)buildVoiceProfile();$("#profile").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+}
 function showAsset(platform){campaignAssets[platform]??=buildDraft({...values(),platform},true);$("#asset-output").value=campaignAssets[platform];const name=platformName(platform);$("#asset-title").textContent=`${name} ${platform==="instagram"?"caption":platform==="pinterest"?"pin description":platform==="youtube_shorts"?"description":"post"}`;document.querySelectorAll("[data-platform]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.platform===platform)));}
 
 $("#scenario").addEventListener("change",setScenario);
+document.querySelectorAll("[data-voice-mode]").forEach(b=>b.addEventListener("click",()=>setVoiceMode(b.dataset.voiceMode)));
 $("#analyze-voice").addEventListener("click",buildVoiceProfile);
-$("#discover-posts").addEventListener("click",discoverPublicPosts);
-$("#use-profile-posts").addEventListener("click",useSelectedProfilePosts);
-$("#transcribe-voice").addEventListener("click",transcribeVoiceAudio);
 
 $("#generate-button").addEventListener("click",()=>generateFromApi());
 $("#regenerate-edits").addEventListener("click",()=>{const editSeed=$("#adapted-output").value.trim();if(!editSeed){$("#draft-status-text").textContent="ADD AN EDIT FIRST";return;}generateFromApi({editSeed});});
 for(const selector of ["#topic","#audience","#campaign-goal","#brand-knowledge","#style-guide","#favorite-words","#avoid-words","#voice-description","#campaign-keywords","#keyword-context"]) $(selector).addEventListener("input",()=>generateLocal());
-$("#voice-tone").addEventListener("change",generateLocal);
-$("#sample-posts-input").addEventListener("input",()=>{importedSamplePosts=null;if($("#sample-posts-input").value.trim())voiceMode="posts";renderProfile($("#scenario").value);generateLocal();});
+for(const selector of ["#voice-tone","#sample-posts-input"]) $(selector).addEventListener("change",()=>{if(selector==="#sample-posts-input"&&voiceMode==="posts")renderProfile($("#scenario").value);generateLocal();});
 for(const selector of ["#platform","#audience","#campaign-category","#campaign-language","#optimization","#scenario-id","#campaign-intent"]) $(selector).addEventListener("change",()=>{if(selector==="#campaign-category"){creatorCategory=$(selector).value;loadScenarios(creatorCategory);}if(selector==="#campaign-language")outputLanguage=$(selector).value;if(selector==="#platform"){syncWordLimit();syncPublishFields();resetPublishApproval();}generateLocal();});
 $("#formality").addEventListener("input",e=>{$("#formality-label").textContent=e.target.value<30?"Conversational":e.target.value<68?"Balanced":"Polished";generateLocal();});
 $("#energy").addEventListener("input",e=>{$("#energy-label").textContent=e.target.value<30?"Calm":e.target.value<70?"Steady":"Energetic";generateLocal();});
@@ -302,8 +348,10 @@ $("#campaign-pack-generate").addEventListener("click",buildCampaignPack);
 document.querySelectorAll("[data-platform]").forEach(b=>b.addEventListener("click",()=>showAsset(b.dataset.platform)));
 $("#asset-output").addEventListener("input",e=>{const active=document.querySelector('[data-platform][aria-selected="true"]')?.dataset.platform;if(active)campaignAssets[active]=e.target.value;});
 $("#copy-asset").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("#asset-output").value);$("#copy-asset").textContent="Copied ";setTimeout(()=>$("#copy-asset").textContent="Copy version ↗",1500);}catch{$("#asset-output").select();document.execCommand("copy");}});
+$("#setup-dismiss").addEventListener("click",()=>{$("#creator-setup").hidden=true;document.body.classList.remove("is-setup");});
 $("#publish-consent").addEventListener("change",e=>$("#approve-publish").disabled=!e.target.checked);
 $("#approve-publish").addEventListener("click",async()=>{if(!currentDraftId||!$("#publish-consent").checked){$("#publish-status").textContent="Select the approval box for this exact draft before continuing.";return;}if(currentDraftPlatform!==values().platform){$("#publish-status").textContent="Generate or save a draft for the selected destination, then approve it.";return;}await persistEditedDraft();try{const r=await fetch(`/api/drafts/${currentDraftId}/publish`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved:true,approved_content:$("#adapted-output").value.trim(),asset_url:$("#publish-media-url").value.trim()})});const d=await r.json();$("#publish-status").textContent=d.error||`Published successfully${d.post_id?` · ${d.post_id}`:""}.`;if(d.status==="published")resetPublishApproval();}catch{$("#publish-status").textContent="Could not reach the publishing service.";}});
-renderProfile("streetwear");generateLocal();loadScenarios("product");loadVoiceProfiles();loadPlatformConnections();loadPerformanceSummary();
+document.body.classList.add("is-setup");showSetupStep(1);
+renderProfile("streetwear");generateLocal();loadScenarios("product");loadVoiceProfiles();loadPlatformConnections();loadPerformanceSummary();analyzeProfile("streetwear");
 fetch("/api/health").then(r=>r.ok?r.json():null).then(s=>{if(s)$("#api-status-label").textContent=s.mode==="sarvam"?"SARVAM CONNECTED":s.mode==="openai-compatible"?"AI CONNECTED":"LOCAL MODE";}).catch(()=>{});
 const oauthParams=new URLSearchParams(location.search);if(oauthParams.get("connected")){$("#publish-status").textContent=`${platformName(oauthParams.get("connected"))} account connected through OAuth.`;history.replaceState(null,"",location.pathname);}else if(oauthParams.get("oauth_error")){$("#publish-status").textContent=`${platformName(oauthParams.get("oauth_error"))} connection did not complete. Check provider credentials, redirect URI, scopes, and review status.`;history.replaceState(null,"",location.pathname);}

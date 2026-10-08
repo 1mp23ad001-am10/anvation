@@ -218,24 +218,3 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px}
 /* Single-draft workspace: give the editable result the full reading column. */
 .compare-grid{grid-template-columns:minmax(0,1fr)}
 .adapted-card{grid-column:1/-1}
-
-/* Compact, recording-first voice setup */
-.voice-intro{margin:0 0 12px;color:#687064;font-size:12px;line-height:1.5}
-.voice-recording{padding:14px;background:#f8f8f2;border:1px solid #e2e5d7;border-radius:5px}
-.voice-recording input[type=file]{display:block;width:100%;margin:8px 0 10px;font:12px var(--sans);color:#394435}
-.voice-checklist{display:grid;gap:8px;margin:12px 0 14px}
-.voice-checklist label{display:flex;align-items:flex-start;gap:8px;color:#465142;font-size:11px;line-height:1.45}
-.voice-checklist input{accent-color:#476b4d;margin:2px 0 0}
-.voice-recording textarea{margin-top:6px}
-.voice-extras,.voice-insights{margin-top:12px;border-top:1px solid #e3e5dc;padding-top:10px}
-.voice-extras>summary,.voice-insights>summary,.profile-import>summary{cursor:pointer;color:#53604e;font-size:11px;font-weight:700;list-style:none}
-.voice-extras>summary::-webkit-details-marker,.voice-insights>summary::-webkit-details-marker,.profile-import>summary::-webkit-details-marker{display:none}
-.voice-extras>summary:after,.voice-insights>summary:after,.profile-import>summary:after{content:"＋";float:right;color:#87917d}
-.voice-extras[open]>summary:after,.voice-insights[open]>summary:after,.profile-import[open]>summary:after{content:"−"}
-.voice-extras>.field-label{display:block;margin-top:14px}
-.profile-import{margin:12px 0;padding:12px;background:#f8f8f2;border-radius:4px}
-.profile-import>.field-label{display:block;margin-top:12px}
-.voice-insights .metrics-grid{margin-top:12px}
-.voice-insights .sample-posts{margin-bottom:0}
-.controls-panel #topic{min-height:90px}
-@media(max-width:760px){.voice-checklist{gap:10px}.voice-recording{padding:12px}}

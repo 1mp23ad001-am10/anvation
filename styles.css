@@ -240,3 +240,39 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px}
 .voice-insights .sample-posts{margin-bottom:0}
 .controls-panel #topic{min-height:90px}
 @media(max-width:760px){.voice-checklist{gap:10px}.voice-recording{padding:12px}}
+
+/* Calm, focused setup inspired by lightweight product onboarding. */
+.is-setup .app-shell{display:block;min-height:100vh;background:#f8f8f4}
+.is-setup .sidebar,.is-setup .topbar{display:none}
+.is-setup .main-content{width:100%;max-width:none;min-height:100vh;margin:0;padding:0 clamp(20px,6vw,84px)}
+.is-setup .creator-setup{width:min(100%,900px);min-height:100vh;margin:0 auto;padding:28px 0 52px;display:flex;flex-direction:column;justify-content:flex-start;background:transparent;border:0;border-radius:0;box-shadow:none;animation:none}
+.is-setup .creator-setup:before{display:none}
+.setup-topline{display:flex;align-items:center;justify-content:space-between}
+.setup-wordmark{color:#26372d;text-decoration:none;font:700 17px var(--sans);letter-spacing:-.8px}
+.setup-topline>button{border:0;background:transparent;color:#6e776c;font:11px var(--sans);cursor:pointer;padding:8px 0}
+.is-setup .setup-progress{display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px;margin:46px 0 68px;padding:0;color:#788073;font:10px var(--mono);letter-spacing:.45px}
+.setup-step-bars{display:grid!important;grid-template-columns:repeat(4,minmax(38px,76px));gap:6px;width:auto!important;height:auto!important;max-width:none!important;background:transparent!important}
+.setup-step-bars i{display:block!important;width:auto!important;height:3px!important;background:#e0e3d9;border-radius:3px;transition:background .25s ease}
+.setup-step-bars i.is-active{background:#768a54}
+.is-setup .setup-question{width:min(100%,740px);margin:0 auto}
+.is-setup .setup-question>.eyebrow{margin:0 0 14px;font-size:9px;letter-spacing:1.2px}
+.is-setup .setup-question h2{max-width:700px;color:#2c3b30;font:500 clamp(30px,4vw,40px)/1.16 var(--serif);letter-spacing:-.8px}
+.is-setup .setup-subtitle{max-width:610px;margin:12px 0 30px;color:#737a70;font-size:13px;line-height:1.65}
+.is-setup .creator-types{gap:10px;margin:28px 0 30px}
+.is-setup .creator-types button{min-height:112px;padding:16px;background:#fff;border-color:#e5e7df;border-radius:8px;box-shadow:0 2px 8px rgba(41,52,38,.025)}
+.is-setup .creator-types button:hover{transform:translateY(-1px);border-color:#aab698}
+.is-setup .creator-types button[aria-pressed=true]{background:#f0f3e9;border-color:#7c8e61;box-shadow:inset 0 0 0 1px #7c8e61}
+.is-setup .creator-types button>span{display:grid;place-items:center;width:22px;height:22px;border:1px solid #dfe3d8;border-radius:50%;font:10px var(--mono);color:#7c896d}
+.is-setup .creator-types button strong{font-size:12px}
+.is-setup .creator-types button small{font-size:9px;line-height:1.5}
+.is-setup .setup-question>.field-label{display:block;margin:16px 0 7px;color:#586253;font-size:10px}
+.is-setup .setup-question input.text-input,.is-setup .setup-question textarea{width:100%;max-width:560px;padding:12px 14px;border:1px solid #e0e3da;border-radius:7px;background:#fff;color:#344032;font:12px/1.6 var(--sans)}
+.is-setup .setup-question #discover-posts{margin:12px 0}
+.is-setup .setup-question .discover-results{max-height:25vh;overflow:auto}
+.is-setup .setup-actions{margin-top:28px;padding-top:18px;border-top:1px solid #e7e9e2}
+.is-setup .setup-actions>span{font-size:10px;color:#858b80}
+.is-setup .setup-actions button{padding:11px 17px;font-size:10px}
+.is-setup .setup-back{border:1px solid #dfe3da!important;border-radius:6px;background:#fff!important;color:#586352!important}
+.is-setup .voice-recording{margin-top:20px;padding:17px 19px;border:1px solid #e2e5dc;border-radius:8px;background:#fff}
+.is-setup .voice-recording .input-hint{max-width:570px}
+@media(max-width:760px){.is-setup .main-content{padding:0 20px}.is-setup .creator-setup{padding-top:20px}.is-setup .setup-progress{margin:36px 0 48px}.is-setup .creator-types{grid-template-columns:1fr 1fr}.is-setup .creator-types button{min-height:100px}}

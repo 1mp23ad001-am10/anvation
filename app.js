@@ -299,7 +299,7 @@ function captureSetupStep(){
   }else if(setupStep===2){
     setupAnswers.category=$("#setup-category")?.value||creatorCategory;
     setupAnswers.audience=$("#setup-audience")?.value||"";
-    setupAnswers.brandInfo=$("#setup-brand-info")?.value||"";
+    setupAnswers.brandInfo="";
   }else if(setupStep===3){
     setupAnswers.platform=$("#setup-platform")?.value||"instagram";
     setupAnswers.language=$("#output-language")?.value||"English";
@@ -324,7 +324,8 @@ function showSetupStep(step){
   captureSetupStep();
   if(setupStep===4&&step!==4){const panel=$("#voice-recording-panel"),builder=document.querySelector(".voice-builder");if(panel&&builder&&!builder.contains(panel))builder.append(panel);}
   setupStep=step;const labels=["PROFILE POSTS","YOUR WORK","CHANNEL + LANGUAGE","VOICE MESSAGE"];
-  $("#setup-step-label").textContent=`0${step} / 04 · ${labels[step-1]}`;$("#setup-progress-bar").style.width=`${step*25}%`;
+  $("#setup-step-label").textContent=`Step ${step} of 4 · ${labels[step-1].toLowerCase()}`;
+  document.querySelectorAll(".setup-step-bars i").forEach((bar,index)=>bar.classList.toggle("is-active",index<step));
   const shell=$("#setup-question");shell.classList.remove("question-reenter");void shell.offsetWidth;shell.classList.add("question-reenter");
   const back=step>1?'<button id="setup-back" class="setup-back" type="button">← Back</button>':'';
   const actions=(hint,label="Continue →")=>`<div class="setup-actions"><span>${hint}</span><div class="setup-action-buttons">${back}<button id="setup-next" type="button">${label}</button></div></div>`;
@@ -334,7 +335,7 @@ function showSetupStep(step){
     setupAnswers.selectedIndexes?.forEach(i=>{const box=shell.querySelector(`[data-result-index="${i}"]`);if(box)box.checked=true;});
   }else if(step===2){
     const categories=[["ngo","NGO","Cause, community, action"],["business","Business","Services, expertise, trust"],["creator","Creator","Personality, stories, community"],["product","Product / brand","Benefits, proof, discovery"]];
-    shell.innerHTML=`<p class="eyebrow">02 · YOUR WORK</p><h2 id="setup-title">Who are you creating for?</h2><p class="setup-subtitle">Choose the closest fit, then add only the context this voice needs.</p><div class="creator-types" role="group" aria-label="Creator type">${categories.map(([id,name,desc])=>`<button type="button" data-category="${id}" aria-pressed="${(setupAnswers.category||creatorCategory)===id}"><span>✳</span><strong>${name}</strong><small>${desc}</small></button>`).join("")}</div><label class="field-label" for="setup-audience">Who is this for? <span class="optional-note">Optional</span></label><input id="setup-audience" class="text-input" placeholder="e.g. local families, college students" value="${escapeHtml(setupAnswers.audience||"")}"><label class="field-label" for="setup-brand-info">What should the writer know? <span class="optional-note">Optional</span></label><textarea id="setup-brand-info" rows="3" placeholder="Facts, names, dates, or details to keep accurate">${escapeHtml(setupAnswers.brandInfo||"")}</textarea>${actions("You can change these for any draft.")}`;
+    shell.innerHTML=`<p class="eyebrow">02 · YOUR WORK</p><h2 id="setup-title">Who are you creating for?</h2><p class="setup-subtitle">Pick the closest fit. You can refine the audience in your draft.</p><div class="creator-types" role="group" aria-label="Creator type">${categories.map(([id,name,desc],i)=>`<button type="button" data-category="${id}" aria-pressed="${(setupAnswers.category||creatorCategory)===id}"><span>${i+1}</span><strong>${name}</strong><small>${desc}</small></button>`).join("")}</div><label class="field-label" for="setup-audience">Who is this for? <span class="optional-note">Optional</span></label><input id="setup-audience" class="text-input" placeholder="e.g. local families, college students" value="${escapeHtml(setupAnswers.audience||"")}">${actions("You can change this for any draft.")}`;
     shell.querySelectorAll("[data-category]").forEach(b=>b.onclick=()=>{creatorCategory=b.dataset.category;setupAnswers.category=creatorCategory;shell.querySelectorAll("[data-category]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));});
   }else if(step===3){
     shell.innerHTML=`<p class="eyebrow">03 · CHANNEL + LANGUAGE</p><h2 id="setup-title">Where and how should it sound?</h2><p class="setup-subtitle">Choose the first platform and writing style. A voice recording can detect English, Hindi, or Kannada and update this automatically.</p><div class="setup-controls"><label>First platform<select id="setup-platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></label><label>Draft language<select id="output-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label></div>${actions("You can change these later.")}`;

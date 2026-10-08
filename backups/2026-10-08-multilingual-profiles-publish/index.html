@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=16" />
+    <link rel="stylesheet" href="styles.css?v=15" />
   </head>
   <body>
     <div class="app-shell">
@@ -96,9 +96,9 @@
                 </div>
                 <details class="voice-extras"><summary>More voice options</summary>
                   <details class="profile-import"><summary>Import posts from a public profile</summary>
-                    <label class="field-label" for="profile-url">Public profile to import from</label>
-                    <input id="profile-url" class="text-input" type="url" placeholder="Instagram SerpAPI · X or LinkedIn connected account" />
-                    <button id="discover-posts" class="secondary-action" type="button">Import posts</button>
+                    <label class="field-label" for="profile-url">Instagram, X, or LinkedIn profile URL</label>
+                    <input id="profile-url" class="text-input" type="url" placeholder="https://www.instagram.com/yourbrand/" />
+                    <button id="discover-posts" class="secondary-action" type="button">Find posts</button>
                     <p id="discover-status" class="input-hint" aria-live="polite"></p>
                     <div id="discover-results" class="discover-results"></div>
                     <button id="use-profile-posts" class="secondary-action" type="button" hidden>Use selected posts</button>
@@ -107,9 +107,9 @@
                   <textarea id="sample-posts-input" rows="4" placeholder="Paste one post per paragraph."></textarea>
                   <label class="field-label" for="voice-tone">Starting tone</label>
                   <select id="voice-tone" class="voice-select"><option value="warm and approachable">Warm and approachable</option><option value="bold and playful">Bold and playful</option><option value="expert and precise">Expert and precise</option><option value="minimal and direct">Minimal and direct</option><option value="witty and conversational">Witty and conversational</option></select>
-                  <label class="field-label" for="avoid-words">Claims or terms to avoid (optional)</label><input id="avoid-words" class="text-input" type="text" placeholder="e.g. guaranteed results" />
-                  <div class="voice-builder-footer"><p id="voice-analysis-status" aria-live="polite">Voice profiles use your examples and recording.</p><button id="analyze-voice" class="secondary-action" type="button">Analyze examples</button></div>
-                  <div class="voice-save-row"><label class="field-label" for="saved-voice-select">Saved voices</label><select id="saved-voice-select"><option value="">Choose a saved voice</option></select><label class="field-label" for="voice-profile-name">Profile name</label><input id="voice-profile-name" type="text" placeholder="e.g. BGSCET Kannada" /><div class="voice-profile-actions"><button id="save-voice-profile" class="secondary-action" type="button">Save voice</button><button id="delete-voice-profile" class="secondary-action" type="button" disabled>Delete selected</button></div></div>
+                  <div class="voice-preferences"><label><span class="field-label">Words I like (optional)</span><input id="favorite-words" type="text" placeholder="e.g. thoughtful" /></label><label><span class="field-label">Words or claims to avoid (optional)</span><input id="avoid-words" type="text" placeholder="e.g. guaranteed" /></label></div>
+                  <div class="voice-builder-footer"><p id="voice-analysis-status" aria-live="polite">Voice guidance is optional.</p><button id="analyze-voice" class="secondary-action" type="button">Build voice profile</button></div>
+                  <div class="voice-save-row"><label class="field-label" for="saved-voice-select">Saved voices</label><select id="saved-voice-select"><option value="">Choose a voice profile</option></select><label class="field-label" for="voice-profile-name">Name this voice</label><input id="voice-profile-name" type="text" placeholder="e.g. Community voice" /><button id="save-voice-profile" class="secondary-action" type="button">Save voice</button></div>
                 </details>
               </section>
               <details class="voice-insights"><summary>Voice analysis and example posts</summary><div class="metrics-grid" id="metrics-grid"></div>
@@ -126,7 +126,7 @@
             <div class="regenerate-row"><p><span></span> Make an edit in the adapted draft, then use it as direction for another pass.</p><button id="regenerate-edits" class="regenerate-button" type="button">Regenerate using my edits <span>↗</span></button></div>
             <div class="compare-note"><span class="note-star"></span><p><strong>Voice is a pattern, not a template.</strong><br /><em>Use the draft as a starting point. Your edits make it yours.</em></p></div>
             <section class="quality-panel" aria-live="polite"><div class="quality-heading"><div><span class="draft-kicker">VOICEPRINT QUALITY CHECK</span><h3>Why this draft works</h3></div><strong id="quality-total">—<small>/100</small></strong></div><div id="quality-breakdown" class="quality-breakdown"><span>Generate a draft to score voice, platform fit, keyword context, clarity, and safety.</span></div><div class="quality-note">Transparent rubric · no fabricated engagement predictions</div></section>
-            <section class="publish-panel"><div><span class="draft-kicker">ONE FINAL APPROVAL PER POST</span><h3>Publish this draft</h3><p>Review the exact text and destination account, then approve to publish now. Instagram needs a public HTTPS image or video URL.</p><p id="publish-target" class="publish-target" aria-live="polite">Connect an account to see where this post will publish.</p></div><label id="publish-media-wrap" class="control-block" for="publish-media-url"><span class="field-label">Instagram media URL</span><input id="publish-media-url" class="text-input" type="url" placeholder="https://your-site.example/campaign-image.jpg" /></label><button id="approve-publish" type="button" disabled>Approve & publish now ↗</button><p id="publish-status" aria-live="polite">No post is published until you approve that individual draft.</p></section>
+            <section class="publish-panel"><div><span class="draft-kicker">YOU STAY IN CONTROL</span><h3>Approve this draft for publishing?</h3><p>Connect the destination first. Instagram also needs a publicly reachable image or video URL; X and LinkedIn accept text-only posts.</p></div><label id="publish-media-wrap" class="control-block" for="publish-media-url"><span class="field-label">Image or video URL (required for Instagram)</span><input id="publish-media-url" class="text-input" type="url" placeholder="https://your-site.example/campaign-image.jpg" /></label><label class="publish-consent"><input id="publish-consent" type="checkbox" /> I approve this edited draft for the selected platform</label><button id="approve-publish" type="button" disabled>Review & approve ↗</button><p id="publish-status" aria-live="polite">No post is published until an official platform account is connected and you approve the final draft.</p></section>
             <section class="platform-connections"><div class="campaign-pack-heading"><div><span class="draft-kicker">OPTIONAL ACCOUNT LOGIN</span><h3>Connect for owned-post imports and publishing</h3></div></div><p>Instagram profile posts use SerpAPI. X timelines use the X API through your connected account. LinkedIn imports require permission to read posts from the connected member.</p><div id="platform-connection-list" class="platform-connection-list" aria-live="polite"></div></section>
             <section class="performance-panel"><div class="campaign-pack-heading"><div><span class="draft-kicker">OBSERVED RESULTS</span><h3>Account performance</h3></div><button id="refresh-performance" type="button">Refresh results</button></div><p>Only provider-reported metrics belong here. They stay separate from the writing-quality score.</p><div id="performance-summary" aria-live="polite">No performance observations recorded.</div></section>
             <div class="draft-save-row"><button id="save-draft" class="secondary-action" type="button">Save edited draft</button><span id="draft-save-status" aria-live="polite">Drafts are saved locally after generation.</span></div>
@@ -142,6 +142,6 @@
         <footer class="page-footer"><span>VOICEPRINT CONTENT STUDIO</span><span>ONE IDEA. YOUR VOICE.</span><span>01 — 2026</span></footer>
       </main>
     </div>
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=21"></script>
   </body>
 </html>

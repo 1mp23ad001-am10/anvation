@@ -174,7 +174,6 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px}
 .voice-save-row .field-label:first-child{grid-column:1/-1;margin-bottom:-6px}
 .voice-save-row select,.voice-save-row input{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--line,#deded3);border-radius:8px;background:#fff;color:inherit;font:inherit}
 .voice-save-row button{grid-column:1/-1;justify-self:start}
-.voice-profile-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
 .setup-action-buttons{display:flex;align-items:center;gap:10px}
 .setup-back{border:1px solid var(--line,#deded3);border-radius:8px;background:transparent;padding:11px 16px;color:inherit;font:inherit;cursor:pointer}
 .platform-connection-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}

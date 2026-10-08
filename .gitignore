@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+
+voiceprint.sqlite3-shm
+voiceprint.sqlite3-wal
+
+.voiceprint-session-secret
+.voiceprint-token-key
+.voiceprint-media/
+voiceprint.sqlite3
+voiceprint.sqlite3-shm
+voiceprint.sqlite3-wal
+.codex-finalizer/
+.pptx-build/
+output/

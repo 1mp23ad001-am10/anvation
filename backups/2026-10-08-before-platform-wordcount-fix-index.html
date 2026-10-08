@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f2f0e8" />
+    <title>Voiceprint — Brand voice studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=11" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="wordmark" href="#top" aria-label="Voiceprint home"><span class="wordmark-mark">v.</span><span>voice<span class="wordmark-light">print</span></span></a>
+        <div class="side-rule"></div>
+        <p class="eyebrow side-label">WORKSPACE</p>
+        <nav aria-label="Main navigation">
+          <a class="nav-link active" href="#studio"><span class="nav-icon"></span> Content studio <span class="nav-count">01</span></a>
+          <a class="nav-link" href="#profile"><span class="nav-icon">◌</span> Brand profile</a>
+          <a class="nav-link muted-link" href="#library"><span class="nav-icon">▤</span> Sample library</a>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="demo-card"><span class="demo-dot"></span><div><strong>Local workspace</strong><small>Four audience types · saved voices</small></div></div>
+          <div class="profile-mini"><div class="avatar">V</div><div><strong>Voice profiles</strong><small>NGO · Business · Creator · Product</small></div><span class="more">···</span></div>
+        </div>
+      </aside>
+
+      <main id="top" class="main-content">
+        <header class="topbar"><div class="breadcrumb">WORKSPACE <span>/</span> CONTENT STUDIO</div><div class="topbar-right"><span class="local-status"><i></i> <span id="api-status-label">LOCAL STARTERS</span></span><button class="help-button" type="button" title="Sarvam powers draft generation; SerpAPI finds public indexed context. Social login needs your registered platform apps and permissions.">?</button></div></header>
+        <section class="intro" id="studio">
+          <div class="intro-copy"><p class="eyebrow"><span class="eyebrow-line"></span> MAKE EVERY WORD SOUND LIKE YOU</p><h1>Find your voice.<br /><em>Keep it yours.</em></h1><p class="intro-sub">One idea, shaped by the way your brand already speaks.</p></div>
+          <div class="issue-stamp"><span>CONTENT</span><strong>01</strong><span>VOICE<br />STUDIO</span><i></i></div>
+        </section>
+
+        <section class="creator-setup" id="creator-setup" aria-labelledby="setup-title">
+          <div class="setup-progress"><span id="setup-step-label">01 / 05 · YOUR POSTS</span><div><i id="setup-progress-bar"></i></div><button id="setup-dismiss" type="button" aria-label="Close setup">×</button></div>
+          <div class="setup-question" id="setup-question">
+            <p class="eyebrow">A VOICE STUDIO FOR EVERY KIND OF CREATOR</p><h2 id="setup-title">Who are you creating for?</h2>
+            <p class="setup-subtitle">We’ll shape the brief and the post format around your work.</p>
+            <div class="creator-types" role="group" aria-label="Creator type">
+              <button type="button" data-category="ngo"><span>01</span><strong>NGO</strong><small>Cause, community, action</small></button>
+              <button type="button" data-category="business"><span>02</span><strong>Business</strong><small>Service, expertise, trust</small></button>
+              <button type="button" data-category="creator"><span>03</span><strong>Creator</strong><small>Personality, story, community</small></button>
+              <button type="button" data-category="product"><span>04</span><strong>Product / brand</strong><small>Benefits, proof, discovery</small></button>
+            </div>
+            <div class="setup-controls">
+              <label>First platform<select id="setup-platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option><option value="tiktok">TikTok</option><option value="facebook">Facebook</option><option value="threads">Threads</option><option value="youtube_shorts">YouTube Shorts</option><option value="pinterest">Pinterest</option></select></label>
+              <label>Write in<select id="output-language"><option value="English">English</option><option value="Kannada">ಕನ್ನಡ · Kannada</option><option value="Hindi">हिन्दी · Hindi</option></select></label>
+            </div>
+            <div class="setup-actions"><span>Have no posts? The next step will ask one question at a time.</span><button id="setup-next" type="button">Set up my voice →</button></div>
+          </div>
+        </section>
+
+        <select id="scenario" class="sr-only" aria-hidden="true" tabindex="-1"><option value="streetwear" selected>Demo profile</option><option value="saas">Demo profile</option></select>
+
+        <section class="workspace-grid">
+          <div class="left-column">
+            <section class="panel profile-panel" id="profile">
+              <div class="section-heading"><div><p class="eyebrow">02 / THE BRAND VOICE</p><h2 id="profile-title">Northstar Supply</h2></div><span class="profile-badge">PROFILE</span></div>
+              <p class="profile-summary" id="profile-summary"></p>
+              <section class="voice-builder" aria-labelledby="voice-builder-title">
+                <div class="voice-builder-heading"><div><span class="note-label">MAKE THIS VOICE YOURS</span><h3 id="voice-builder-title">Where should we learn your style?</h3></div><span id="voice-source-badge" class="source-badge">DEMO PROFILE</span></div>
+                <div class="voice-mode-switch" role="group" aria-label="Choose how to define your writing style">
+                  <button type="button" data-voice-mode="demo" aria-pressed="true">Use sample brand</button>
+                  <button type="button" data-voice-mode="posts" aria-pressed="false">I have posts</button>
+                  <button type="button" data-voice-mode="fresh" aria-pressed="false">No posts yet</button>
+                </div>
+                <div id="voice-demo-panel" class="voice-mode-panel">
+                  <p>Start with the selected demo brand and its six example posts. Switch modes to bring your own writing or describe your voice.</p>
+                </div>
+                <div id="voice-posts-panel" class="voice-mode-panel" hidden>
+                  <label class="field-label" for="sample-posts-input">Paste 1–10 posts (separate them with a blank line)</label>
+                  <textarea id="sample-posts-input" rows="4" placeholder="Paste captions or posts you wrote. A few examples are enough to begin."></textarea>
+                  <p class="input-hint">Use public posts you own or have permission to use. We analyze the text you provide.</p>
+                </div>
+                <div id="voice-fresh-panel" class="voice-mode-panel" hidden>
+                  <label class="field-label" for="voice-description">Describe how you want to sound</label>
+                  <textarea id="voice-description" rows="3" placeholder="For example: warm and direct, like I’m sharing a useful tip with a friend. Keep sentences short."></textarea>
+              <label class="field-label" for="voice-tone">Pick a starting tone</label>
+                  <select id="voice-tone" class="voice-select"><option value="warm and approachable">Warm and approachable</option><option value="bold and playful">Bold and playful</option><option value="expert and precise">Expert and precise</option><option value="minimal and direct">Minimal and direct</option><option value="witty and conversational">Witty and conversational</option></select>
+                  <p class="input-hint">Choose a starter voice or describe your own. You can review and edit every draft.</p>
+                </div>
+                <div class="voice-preferences">
+                  <label><span class="field-label">Words or phrases I like</span><input id="favorite-words" type="text" placeholder="e.g. thoughtful, built for real life" /></label>
+                  <label><span class="field-label">Words or claims to avoid</span><input id="avoid-words" type="text" placeholder="e.g. revolutionary, guaranteed" /></label>
+                </div>
+                <div class="voice-builder-footer"><p id="voice-analysis-status" aria-live="polite">Demo voice is ready. You can switch to your own examples or start from preferences.</p><button id="analyze-voice" class="secondary-action" type="button">Build voice profile</button></div>
+                <div class="voice-save-row"><label class="field-label" for="saved-voice-select">Starter and saved voices</label><select id="saved-voice-select"><option value="">Choose a voice profile</option></select><label class="field-label" for="voice-profile-name">Name your custom voice</label><input id="voice-profile-name" type="text" placeholder="e.g. Founder notes, Kannada community voice" /><button id="save-voice-profile" class="secondary-action" type="button">Save current voice</button></div>
+              </section>
+              <div class="metrics-grid" id="metrics-grid"></div>
+              <div class="voice-notes"><div><span class="note-label">SOUNDS LIKE</span><strong id="tone-notes"></strong></div><div><span class="note-label">DO MORE OF</span><strong id="dos-notes"></strong></div><div><span class="note-label">SKIP</span><strong id="donts-notes"></strong></div></div>
+              <details class="sample-posts" id="library"><summary>View the 6 sample posts behind this profile <span>＋</span></summary><ol id="sample-list"></ol></details>
+            </section>
+
+            <section class="panel controls-panel">
+              <div class="section-heading compact"><div><p class="eyebrow">03 / YOUR IDEA</p><h2>Shape the draft</h2></div><span class="step-marker">03</span></div>
+              <label class="field-label" for="topic">What do you want to say?</label>
+              <textarea id="topic" rows="2" placeholder="Write your idea, story, or announcement…"></textarea>
+              <div class="control-row">
+                <label class="control-block"><span class="field-label">Platform</span><select id="platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option><option value="tiktok">TikTok</option><option value="facebook">Facebook</option><option value="threads">Threads</option><option value="youtube_shorts">YouTube Shorts</option><option value="pinterest">Pinterest</option></select></label>
+                <label class="control-block"><span class="field-label">Write in</span><select id="campaign-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label>
+              </div>
+              <div class="range-control"><div class="range-label"><label class="field-label" for="target-words">Draft length</label><span id="target-words-label" class="range-value">80 words</span></div><div class="range-scale"><span>20 words</span><span>300 words</span></div><input id="target-words" type="range" min="20" max="300" step="5" value="80" /></div>
+              <details class="advanced-campaign"><summary>More controls <span>Audience, campaign goal, research, discovery and voice</span></summary>
+              <div class="keyword-fields"><label><span class="field-label">Optional keyword</span><input id="campaign-keywords" class="text-input" placeholder="Add a phrase only if this post needs one" /></label><label><span class="field-label">Keyword context</span><input id="keyword-context" class="text-input" placeholder="Explain what it means for this post" /></label></div>
+              <div class="control-row campaign-fields">
+                <label class="control-block"><span class="field-label">Audience</span><input id="audience" class="text-input" type="text" placeholder="Who are you speaking to?" /></label>
+                <label class="control-block"><span class="field-label">Creator type</span><select id="campaign-category"><option value="ngo">NGO</option><option value="business">Business</option><option value="creator">Influencer / creator</option><option value="product" selected>Product / brand</option></select></label>
+              </div>
+              <div class="control-row campaign-fields"><label class="control-block"><span class="field-label">Scenario</span><select id="scenario-id"></select></label><label class="control-block"><span class="field-label">Campaign intent</span><select id="campaign-intent"><option value="inform">Inform</option><option value="educate">Educate</option><option value="inspire">Inspire</option><option value="build_trust">Build trust</option><option value="drive_action">Drive action</option></select></label></div>
+              <label class="field-label campaign-goal-label" for="campaign-goal">What should this post help achieve? <span class="optional-note">Optional</span></label>
+              <input id="campaign-goal" class="text-input" type="text" placeholder="Optional: what should this post help achieve?" />
+              <details class="brand-context">
+                <summary>Brand knowledge & style rules <span>＋</span></summary>
+                <label class="field-label" for="brand-knowledge">Source story, transcript, and approved facts</label>
+                <textarea id="brand-knowledge" rows="3" placeholder="Add verified facts or context only if needed."></textarea>
+                <label class="field-label" for="style-guide">Writing rules</label>
+                <textarea id="style-guide" rows="2" placeholder="Words to use or avoid, formatting, or claims to exclude…"></textarea>
+              </details>
+              <details class="public-import campaign-research">
+                <summary>Research public campaign context with SerpAPI <span>＋</span></summary>
+                <label class="field-label" for="research-query">Search the public web</label>
+                <div class="research-query-row"><input id="research-query" type="search" placeholder="e.g. Bengaluru local artisan market trends" /><button id="research-button" class="secondary-action" type="button">Search</button></div>
+                <p class="input-hint">Search result snippets are references, not verified facts. Review sources before adding any context to your brief.</p>
+                <div id="research-status" class="input-hint" aria-live="polite"></div>
+                <div id="research-results" class="discover-results"></div>
+                <button id="use-research-results" class="secondary-action" type="button" hidden>Add selected excerpts to approved facts</button>
+              </details>
+              <label class="field-label" for="optimization">Discovery optimization</label><select id="optimization" class="text-input"><option value="social_seo">Social + SEO</option><option value="aeo">Answer engine (AEO)</option><option value="geo">Generative search (GEO)</option><option value="all">SEO + AEO + GEO</option></select>
+              <div class="range-control"><div class="range-label"><label class="field-label" for="formality">Voice formality</label><span id="formality-label" class="range-value">Casual</span></div><div class="range-scale"><span>Conversational</span><span>Polished</span></div><input id="formality" type="range" min="0" max="100" value="24" /></div>
+              <div class="range-control"><div class="range-label"><label class="field-label" for="energy">Energy</label><span id="energy-label" class="range-value">Steady</span></div><div class="range-scale"><span>Calm</span><span>High energy</span></div><input id="energy" type="range" min="0" max="100" value="50" /></div>
+              </details>
+              <button id="generate-button" class="generate-button" type="button">Generate both drafts</button>
+            </section>
+          </div>
+
+          <section class="panel compare-panel" aria-live="polite">
+            <div class="section-heading output-heading"><div><p class="eyebrow">04 / SIDE BY SIDE</p><h2>Same idea. Different voice.</h2></div><span class="draft-status"><i></i> <span id="draft-status-text">READY</span></span></div>
+            <div class="compare-grid">
+              <article class="draft-card generic-card"><div class="draft-card-head"><div><span class="draft-kicker">THE BASELINE</span><h3>Generic</h3></div><span class="draft-icon generic-icon">○</span></div><div class="draft-meta"><span class="post-avatar generic-avatar">G</span><span><strong>Generic brand</strong><small id="generic-platform">INSTAGRAM</small></span></div><div id="generic-output" class="draft-text generic-text"></div><div class="draft-footer"><span>WITHOUT A BRAND PROFILE</span><span id="generic-words">0 WORDS</span></div></article>
+              <article class="draft-card adapted-card"><div class="draft-card-head"><div><span class="draft-kicker">VOICE ADAPTED</span><h3 id="adapted-brand-title">Northstar Supply</h3></div><span class="draft-icon adapted-icon"></span></div><div class="draft-meta"><span class="post-avatar adapted-avatar" id="brand-avatar">N</span><span><strong id="adapted-handle">northstarsupply</strong><small id="adapted-platform">INSTAGRAM</small></span></div><label class="sr-only" for="adapted-output">Edit the adapted draft</label><textarea id="adapted-output" class="draft-text adapted-text" spellcheck="true"></textarea><div class="editor-toolbar" aria-label="Draft editing actions"><button type="button" data-edit="rewrite">Rewrite</button><button type="button" data-edit="clarify">Improve clarity</button><button type="button" data-edit="expand">Expand</button><button type="button" data-edit="shorten">Shorten</button><button type="button" data-edit="cta">Add CTA</button></div><div class="draft-footer"><span>EDITABLE · YOUR BRAND VOICE</span><span id="adapted-words">0 WORDS</span></div></article>
+            </div>
+            <div class="regenerate-row"><p><span></span> Make an edit in the adapted draft, then use it as direction for another pass.</p><button id="regenerate-edits" class="regenerate-button" type="button">Regenerate using my edits <span>↗</span></button></div>
+            <div class="compare-note"><span class="note-star"></span><p><strong>Voice is a pattern, not a template.</strong><br /><em>Use the draft as a starting point. Your edits make it yours.</em></p></div>
+            <section class="quality-panel" aria-live="polite"><div class="quality-heading"><div><span class="draft-kicker">VOICEPRINT QUALITY CHECK</span><h3>Why this draft works</h3></div><strong id="quality-total">—<small>/100</small></strong></div><div id="quality-breakdown" class="quality-breakdown"><span>Generate a draft to score voice, platform fit, keyword context, clarity, and safety.</span></div><div class="quality-note">Transparent rubric · no fabricated engagement predictions</div></section>
+            <section class="publish-panel"><div><span class="draft-kicker">YOU STAY IN CONTROL</span><h3>Approve this draft for publishing?</h3><p>Connect the destination first. Some platforms require an image or video URL that is publicly reachable by the provider.</p></div><label class="control-block" for="publish-media-url"><span class="field-label">Media URL (required for Instagram, TikTok, or Pinterest)</span><input id="publish-media-url" class="text-input" type="url" placeholder="https://your-site.example/campaign-image.jpg" /></label><label id="youtube-video-wrap" class="control-block" for="youtube-video-file" hidden><span class="field-label">YouTube video file</span><input id="youtube-video-file" class="text-input" type="file" accept="video/*" /><span id="youtube-upload-status" class="field-hint">Video is uploaded to this local app before YouTube publishing.</span></label><label id="youtube-title-wrap" class="control-block" for="youtube-video-title" hidden><span class="field-label">YouTube title</span><input id="youtube-video-title" class="text-input" maxlength="100" placeholder="Video title" /></label><label id="youtube-privacy-wrap" class="control-block" for="youtube-privacy" hidden><span class="field-label">YouTube visibility</span><select id="youtube-privacy" class="text-input"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select></label><label id="pinterest-board-wrap" class="control-block" for="publish-pinterest-board" hidden><span class="field-label">Pinterest board ID</span><input id="publish-pinterest-board" class="text-input" placeholder="Board ID from your Pinterest account" /></label><label id="facebook-page-wrap" class="control-block" for="publish-facebook-page" hidden><span class="field-label">Facebook Page</span><select id="publish-facebook-page" class="text-input"></select></label><label class="publish-consent"><input id="publish-consent" type="checkbox" /> I approve this edited draft for the selected platform</label><button id="approve-publish" type="button" disabled>Review & approve ↗</button><p id="publish-status" aria-live="polite">No post is published until an official platform account is connected and you approve the final draft.</p></section>
+            <section class="platform-connections"><div class="campaign-pack-heading"><div><span class="draft-kicker">OPTIONAL ACCOUNT LOGIN</span><h3>Connect for owned-post imports and publishing</h3></div></div><p>Public post search works separately in your voice profile. Account login appears when this server has the provider’s approved app credentials; those credentials are not included with SerpAPI or Sarvam.</p><div id="platform-connection-list" class="platform-connection-list" aria-live="polite"></div></section>
+            <section class="performance-panel"><div class="campaign-pack-heading"><div><span class="draft-kicker">OBSERVED RESULTS</span><h3>Account performance</h3></div><button id="refresh-performance" type="button">Refresh results</button></div><p>Only provider-reported metrics belong here. They stay separate from the writing-quality score.</p><div id="performance-summary" aria-live="polite">No performance observations recorded.</div></section>
+            <div class="draft-save-row"><button id="save-draft" class="secondary-action" type="button">Save edited draft</button><span id="draft-save-status" aria-live="polite">Drafts are saved locally after generation.</span></div>
+            <section class="campaign-pack">
+              <div class="campaign-pack-heading"><div><span class="draft-kicker">CAMPAIGN WORKSPACE</span><h3>One brief. Every channel.</h3></div><button id="campaign-pack-generate" type="button">Build campaign pack <span>↗</span></button></div>
+              <div id="campaign-pack-results" class="campaign-pack-results" hidden>
+                <div class="asset-tabs" role="tablist" aria-label="Campaign channel assets"><button type="button" role="tab" data-platform="instagram" aria-selected="true">Instagram</button><button type="button" role="tab" data-platform="linkedin" aria-selected="false">LinkedIn</button><button type="button" role="tab" data-platform="x" aria-selected="false">X</button><button type="button" role="tab" data-platform="tiktok" aria-selected="false">TikTok</button><button type="button" role="tab" data-platform="facebook" aria-selected="false">Facebook</button><button type="button" role="tab" data-platform="threads" aria-selected="false">Threads</button><button type="button" role="tab" data-platform="youtube_shorts" aria-selected="false">YouTube</button><button type="button" role="tab" data-platform="pinterest" aria-selected="false">Pinterest</button></div>
+                <div class="asset-preview"><strong id="asset-title">Instagram caption</strong><textarea id="asset-output" aria-label="Campaign channel draft"></textarea><button id="copy-asset" type="button">Copy version ↗</button></div>
+              </div>
+            </section>
+          </section>
+        </section>
+        <footer class="page-footer"><span>VOICEPRINT CONTENT STUDIO</span><span>ONE IDEA. TWO WAYS TO SAY IT.</span><span>01 — 2026</span></footer>
+      </main>
+    </div>
+    <script src="app.js?v=16"></script>
+  </body>
+</html>

@@ -1309,7 +1309,7 @@ def generate_route():
                         counts = {key: len(word_list(value)) for key, value in short_drafts.items()}
                         try:
                             expanded = model_json(
-                                'Expand the supplied social draft to the exact requested target word count, within 2 words. The current word count and remaining words are supplied. Preserve voice, language/script, factual claims, keywords, and structure. Add useful explanation from the supplied brief and sample posts; do not repeat sentences, add filler, or invent facts. Return JSON only with the string key adapted.',
+                                'Expand the supplied social draft to target_words exactly, with a tolerance of 2 words. Use the supplied remaining_words value to add that many words. Keep every sample_posts item as a separate, independent example; infer voice only from repeated patterns across several items, and never copy a repeated post opening. Preserve the current draft, language and script, factual claims, keywords, and platform structure. Add useful, distinct explanation grounded in the topic, audience, approved facts, implications, and next steps. Do not add filler, repeat a point, invent facts, change the requested language, or stop before the target. Count using ordinary word boundaries. Return JSON only with the string key adapted.',
                                 {"target_words": target_words, "current_word_counts": counts,
                                  "remaining_words": {key: target_words - count for key, count in counts.items()},
                                  "drafts_to_expand": short_drafts, "topic": topic,

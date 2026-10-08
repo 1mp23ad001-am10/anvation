@@ -37,6 +37,9 @@ let wordTargetTimer = null;
 let lastQuality = {};
 let selectedVoiceProfileId = null;
 let currentVideoAssetId = null;
+let ideaRecorder = null;
+let ideaRecorderStream = null;
+let ideaRecorderChunks = [];
 
 const sentencePattern = /[^.!?]+[.!?]+|[^.!?]+$/g;
 const wordPattern = /[\p{L}\p{N}\p{M}]+(?:['’][\p{L}\p{N}\p{M}]+)*/gu;
@@ -142,20 +145,21 @@ function buildDraft(v, adapted=true, editSeed="") {
   if(adapted&&v.platform==="x"&&text.length>280)text=`${text.slice(0,277).replace(/\s+\S*$/,"" )}…`;
   return text;
 }
-function syncWordLimit(){const slider=$("#target-words");slider.max=$("#platform").value==="x"?35:300;if(+slider.value>+slider.max)slider.value=slider.max;$("#target-words-label").textContent=`${slider.value} words`;$("#target-words-max").textContent=`${slider.max} words`;}
-function updateCounts() { const target=+$("#target-words").value;const count=words($("#adapted-output").value).length;$("#adapted-words").textContent=`${count} / ${target} WORDS`; }
+function syncWordLimit(){const slider=$("#target-words"),platform=$("#platform").value;slider.max=platform==="x"?35:300;if(+slider.value>+slider.max)slider.value=slider.max;$("#target-words-label").textContent=`${slider.value} words`;$("#target-words-max").textContent=`${slider.max} words`;const chars={x:280,instagram:2200,linkedin:3000}[platform];$("#length-hint").textContent=`Word target applies when you generate. ${platformName(platform)} also has a ${chars.toLocaleString()}-character post limit.`;}
+function updateCounts() { const target=+$("#target-words").value;const count=words($("#adapted-output").value).length;$("#adapted-words").textContent=hasApiDraft?`${count} / ${target} WORDS`:`${count} WORD PREVIEW · ${target} WORD TARGET`; }
 function generateLocal(options={}) {
   const v=values(); $("#adapted-platform").textContent=platformName(v.platform).toUpperCase();
   if(hasApiDraft){updateCounts();$("#draft-status-text").textContent="SETTINGS CHANGED · REGENERATE TO APPLY";return;}
   if(!v.topic){$("#adapted-output").value="";updateCounts();$("#draft-status-text").textContent="ADD AN IDEA TO START";return;}
-  $("#adapted-output").value=buildDraft(v,true,options.editSeed||""); updateCounts(); $("#draft-status-text").textContent=options.editSeed?"REWORKED FROM YOUR EDIT":"READY TO EDIT";
+  $("#adapted-output").value=buildDraft(v,true,options.editSeed||""); updateCounts(); $("#draft-status-text").textContent=options.editSeed?"LOCAL PREVIEW · APPLYING YOUR EDIT":"LOCAL STARTER PREVIEW · GENERATE FOR YOUR WORD TARGET";
 }
 async function generateFromApi(options={}) {
+  if(options.targetWords){const max=+$("#target-words").max;$("#target-words").value=Math.min(max,Math.max(20,options.targetWords));$("#target-words-label").textContent=`${$("#target-words").value} words`;}
   const input=values();
   if(!input.topic){$("#draft-status-text").textContent="ADD YOUR IDEA FIRST";$("#topic").focus();return;}
   generateLocal(options); $("#draft-status-text").textContent="WRITING…";
   try {
-    const response=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...input,edit_seed:options.editSeed||""})});
+    const response=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...input,edit_seed:options.editSeed||"",edit_instruction:options.instruction||""})});
     const result=await response.json();if(!response.ok) throw new Error(result.error||"Generation unavailable");
     if(typeof result.adapted!=="string") throw new Error("Invalid API result");
     if(result.target_words!==input.target_words){$("#target-words").value=result.target_words;$("#target-words-label").textContent=`${result.target_words} words`;}
@@ -206,23 +210,49 @@ function useSelectedProfilePosts(){
   voiceMode="posts";$("#voice-source-badge").textContent="YOUR POSTS";$("#discover-status").textContent=`${importedSamplePosts.length} selected posts are ready as separate examples.`;
   renderProfile($("#scenario").value);generateLocal();
 }
-async function transcribeVoiceAudio(){
-  const file=$("#voice-audio")?.files?.[0];
-  if(!file){$("#voice-audio-status").textContent="Choose an audio recording first.";return;}
-  $("#transcribe-voice").disabled=true;$("#voice-audio-status").textContent="Transcribing on this computer with Whisper…";
+async function startIdeaRecording(){
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){$("#speech-status").textContent="Live recording is unavailable in this browser. Type the brief instead.";return;}
   try{
-    const form=new FormData();form.append("file",file);
-    const response=await fetch("/api/transcribe",{method:"POST",body:form});const data=await response.json();
-    if(!response.ok)throw new Error(data.error||"Transcription failed.");
-    $("#voice-description").value=[$("#voice-description").value.trim(),data.text].filter(Boolean).join("\n\n");
-    voiceMode="fresh";generateLocal();
-    const detected=detectWritingLanguage(data.language,data.text);
-    outputLanguage=detected;$("#campaign-language").value=detected;
-    if(setupStep>=3)setupAnswers.language=detected;
-    if($("#output-language"))$("#output-language").value=detected;
-    $("#voice-audio-status").textContent=`Detected ${detected} from your recording. Draft language updated automatically; edit the transcript if needed.`;
-  }catch(error){$("#voice-audio-status").textContent=error.message||"Could not transcribe this recording.";}
-  finally{$("#transcribe-voice").disabled=false;}
+    ideaRecorderStream=await navigator.mediaDevices.getUserMedia({audio:true});ideaRecorderChunks=[];
+    const mimeType=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type=>MediaRecorder.isTypeSupported?.(type));
+    ideaRecorder=new MediaRecorder(ideaRecorderStream,mimeType?{mimeType}:undefined);
+    ideaRecorder.ondataavailable=event=>{if(event.data?.size)ideaRecorderChunks.push(event.data);};
+    ideaRecorder.onstop=()=>{ideaRecorderStream?.getTracks().forEach(track=>track.stop());ideaRecorderStream=null;const blob=new Blob(ideaRecorderChunks,{type:ideaRecorder?.mimeType||"audio/webm"});ideaRecorder=null;transcribeIdeaAudio(blob);};
+    ideaRecorder.start();$("#start-recording").hidden=true;$("#stop-recording").hidden=false;$("#speech-status").textContent="Listening… Speak naturally in English, Hindi, or Kannada. Stop when you’re done.";
+  }catch(error){ideaRecorderStream?.getTracks().forEach(track=>track.stop());ideaRecorderStream=null;$("#speech-status").textContent=error.name==="NotAllowedError"?"Microphone access was blocked. Allow it in the browser address bar, then try again.":"Could not start the microphone. You can type the brief instead.";}
+}
+function stopIdeaRecording(){if(ideaRecorder?.state==="recording"){ideaRecorder.stop();$("#stop-recording").disabled=true;$("#speech-status").textContent="Transcribing with local Whisper…";}}
+async function transcribeIdeaAudio(blob){
+  try{
+    const ext=blob.type.includes("mp4")?"m4a":"webm",form=new FormData();form.append("file",blob,`voice-brief.${ext}`);
+    const response=await fetch("/api/transcribe",{method:"POST",body:form}),data=await response.json();if(!response.ok)throw new Error(data.error||"Transcription failed.");
+    const prior=$("#topic").value.trim();$("#topic").value=[prior,data.text].filter(Boolean).join(prior?"\n":"");
+    const detected=detectWritingLanguage(data.language,data.text);outputLanguage=detected;$("#campaign-language").value=detected;if(setupStep>=3)setupAnswers.language=detected;if($("#output-language"))$("#output-language").value=detected;
+    voiceMode="fresh";renderBriefChecklist();generateLocal();$("#speech-status").textContent=`${detected} detected · transcript added. Mapping audience, purpose, facts, and keywords…`;
+    await mapBriefToFields($("#topic").value,detected);
+  }catch(error){$("#speech-status").textContent=error.message||"Could not transcribe the recording.";}
+  finally{$("#start-recording").hidden=false;$("#stop-recording").hidden=true;$("#stop-recording").disabled=false;}
+}
+async function mapBriefToFields(source,language=outputLanguage){
+  const text=String(source||"").trim();if(text.length<8){renderBriefChecklist();return;}
+  try{
+    const response=await fetch("/api/brief-map",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,language})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Brief mapping unavailable.");
+    const fields=[["audience","#audience"],["campaign_goal","#campaign-goal"],["approved_facts","#brand-knowledge"],["keyword_context","#keyword-context"],["voice_style","#voice-description"]];
+    for(const [key,selector] of fields)if(data[key]&&!$(selector).value.trim())$(selector).value=data[key];
+    if(Array.isArray(data.keywords)&&data.keywords.length&&!$("#campaign-keywords").value.trim())$("#campaign-keywords").value=data.keywords.join(", ");
+    if(data.campaign_intent&&[...$("#campaign-intent").options].some(option=>option.value===data.campaign_intent))$("#campaign-intent").value=data.campaign_intent;
+    renderBriefChecklist();generateLocal();
+    $("#speech-status").textContent=data.mapped?`${language} transcript mapped. Review the captured details below; you can edit every field.`:"Transcript added. The writing model is unavailable for automatic field mapping, so your words remain in the brief.";
+  }catch(error){renderBriefChecklist();$("#speech-status").textContent=`Transcript added; automatic mapping failed: ${error.message||"service unavailable"}`;}
+}
+function renderBriefChecklist(){
+  const entries=[
+    ["Post idea",$("#topic").value.trim(),true],
+    ["Audience",$("#audience").value.trim(),false],
+    ["Purpose / next step",$("#campaign-goal").value.trim(),false],
+    ["Names, dates, facts, keywords",[$("#brand-knowledge").value,$("#campaign-keywords").value].filter(Boolean).join(" · ").trim(),false],
+  ];
+  $("#brief-checklist-items").innerHTML=entries.map(([label,value,required])=>`<li class="${value?"is-captured":"is-missing"}"><span class="brief-check-icon" aria-hidden="true">${value?"✓":"·"}</span><span><strong>${label}</strong><small>${value?escapeHtml(value.length>100?value.slice(0,97)+"…":value):required?"Add one idea to generate a post":"Not mentioned · optional"}</small></span><em>${value?"Captured":required?"Needed":"Optional"}</em></li>`).join("");
 }
 async function loadScenarios(category, selected=""){
   try{if(!Object.keys(scenarioCatalog).length){const r=await fetch("/api/scenarios");scenarioCatalog=await r.json();}}
@@ -277,15 +307,24 @@ function setScenario() {
   $("#formality-label").textContent=saas?"Polished":"Casual";$("#energy-label").textContent=saas?"Steady":"Energetic";
   customVoiceProfile=null;renderProfile(key);generateLocal();if(voiceMode==="demo")analyzeProfile(key);
 }
-function editDraft(action) {
-  const box=$("#adapted-output"), text=box.value.trim(), v=values(); if(!text)return;
-  const paragraphs=text.split(/\n\s*\n/); let next=text;
-  if(action==="rewrite"){ next=buildDraft(v,true); }
-  if(action==="clarify"){ next=text.replace(/\butilize\b/gi,"use").replace(/\bin order to\b/gi,"to").replace(/\b(the next step|the goal):/gi,"$1 is").replace(/\s+/g," ").replace(/\n\s*/g,"\n\n"); }
-  if(action==="expand"){ next=`${text}\n\n${v.brand_id==="saas"?"That means teams can spend less time rebuilding context and more time responding to customers.":"Add one relevant detail, explain why it matters to your audience, and make the next step clear."}`; }
-  if(action==="shorten"){ next=paragraphs.slice(0,2).join("\n\n").replace(/\s+/g," ").replace(/\n /g,"\n"); }
-  if(action==="cta"){ if(!/\b(learn more|tell us|share|visit|try|join|reply|comment|sign up)\b/i.test(text))next+=`\n\n${v.brand_id==="saas"?"See what changed and share your questions.":"Share your thoughts or the next step you would take."}`; }
-  box.value=next;updateCounts();$("#draft-status-text").textContent="EDIT APPLIED · READY TO REGENERATE";
+async function editDraft(action) {
+  const text=$("#adapted-output").value.trim();if(!text)return;
+  const labels={rewrite:"Rewrite",clarify:"Improve clarity",expand:"Expand",shorten:"Shorten",cta:"Add CTA"};
+  const instructions={
+    rewrite:"Rewrite the supplied draft with a fresh, stronger structure and opening. Preserve the user's intent, language, voice, verified facts, platform format, and requested word target. Do not copy the draft sentence by sentence.",
+    clarify:"Improve clarity and natural flow. Prefer concrete, short sentences, remove ambiguity and repetition, and preserve all supplied facts, language, voice, platform format, and requested word target.",
+    expand:"Expand the draft with useful detail grounded in the spoken brief, audience, and approved facts. Do not invent information or repeat points. Reach the selected word target within the platform character limit.",
+    shorten:"Make the draft substantially shorter while preserving its main message, voice, and all essential verified facts. Aim for the adjusted word target.",
+    cta:"Add one natural, specific call to action that fits the post and audience. Do not add a link, offer, or promise that the user did not provide. Preserve language, voice, facts, and target length."
+  };
+  if(!instructions[action])return;
+  const button=document.querySelector(`[data-edit="${action}"]`),actual=words(text).length,max=+$("#target-words").max;
+  let targetWords=+$("#target-words").value;
+  if(action==="shorten")targetWords=Math.max(20,Math.min(targetWords,Math.round(actual*.7)));
+  if(action==="expand")targetWords=Math.min(max,Math.max(targetWords,Math.min(max,actual+Math.max(30,Math.round(actual*.5)))));
+  if(button)button.disabled=true;$("#draft-status-text").textContent=`Applying ${labels[action].toLowerCase()} with your brief…`;
+  try{await generateFromApi({editSeed:text,instruction:instructions[action],targetWords});}
+  finally{if(button)button.disabled=false;}
 }
 function captureSetupStep(){
   if(setupStep===1){
@@ -303,17 +342,16 @@ function captureSetupStep(){
   }else if(setupStep===3){
     setupAnswers.platform=$("#setup-platform")?.value||"instagram";
     setupAnswers.language=$("#output-language")?.value||"English";
-  }else if(setupStep===4){setupAnswers.voiceDescription=$("#voice-description")?.value||"";}
+  }
 }
 function finishSetup(){
-  captureSetupStep();const panel=$("#voice-recording-panel"),builder=document.querySelector(".voice-builder");
-  if(panel&&builder&&!builder.contains(panel))builder.append(panel);
+  captureSetupStep();const panel=$("#brief-voice-panel"),slot=$("#brief-voice-slot");
+  if(panel&&slot&&!slot.contains(panel))slot.append(panel);
   if(setupAnswers.category){creatorCategory=setupAnswers.category;$("#campaign-category").value=creatorCategory;}
   if(setupAnswers.audience!==undefined)$("#audience").value=setupAnswers.audience;
   if(setupAnswers.brandInfo!==undefined)$("#brand-knowledge").value=setupAnswers.brandInfo;
   if(setupAnswers.platform)$("#platform").value=setupAnswers.platform;
   if(setupAnswers.language){outputLanguage=setupAnswers.language;$("#campaign-language").value=outputLanguage;}
-  if(setupAnswers.voiceDescription)$("#voice-description").value=setupAnswers.voiceDescription;
   if(setupAnswers.posts?.length){importedSamplePosts=setupAnswers.posts;$("#sample-posts-input").value=setupAnswers.posts.join("\n\n");voiceMode="posts";}
   else{importedSamplePosts=null;$("#sample-posts-input").value="";voiceMode="fresh";}
   $("#creator-setup").hidden=true;document.body.classList.remove("is-setup");syncWordLimit();
@@ -322,7 +360,7 @@ function finishSetup(){
 }
 function showSetupStep(step){
   captureSetupStep();
-  if(setupStep===4&&step!==4){const panel=$("#voice-recording-panel"),builder=document.querySelector(".voice-builder");if(panel&&builder&&!builder.contains(panel))builder.append(panel);}
+  if(setupStep===4&&step!==4){const panel=$("#brief-voice-panel"),slot=$("#brief-voice-slot");if(panel&&slot&&!slot.contains(panel))slot.append(panel);}
   setupStep=step;const labels=["PROFILE POSTS","YOUR WORK","CHANNEL + LANGUAGE","VOICE MESSAGE"];
   $("#setup-step-label").textContent=`Step ${step} of 4 · ${labels[step-1].toLowerCase()}`;
   document.querySelectorAll(".setup-step-bars i").forEach((bar,index)=>bar.classList.toggle("is-active",index<step));
@@ -341,9 +379,9 @@ function showSetupStep(step){
     shell.innerHTML=`<p class="eyebrow">03 · CHANNEL + LANGUAGE</p><h2 id="setup-title">Where and how should it sound?</h2><p class="setup-subtitle">Choose the first platform and writing style. A voice recording can detect English, Hindi, or Kannada and update this automatically.</p><div class="setup-controls"><label>First platform<select id="setup-platform"><option value="instagram">Instagram</option><option value="linkedin">LinkedIn</option><option value="x">X</option></select></label><label>Draft language<select id="output-language"><option>English</option><option>Hindi</option><option>Kannada</option><option>Hinglish</option><option>Kanglish</option></select></label></div>${actions("You can change these later.")}`;
     $("#setup-platform").value=setupAnswers.platform||$("#platform").value;$("#output-language").value=setupAnswers.language||outputLanguage;
   }else{
-    const panel=$("#voice-recording-panel");
-    shell.innerHTML=`<p class="eyebrow">04 · ONE VOICE MESSAGE</p><h2 id="setup-title">Speak naturally. We’ll recognize the language.</h2><p class="setup-subtitle">Record or upload one short message in English, Hindi, or Kannada. Whisper detects it automatically. No checklist and no required voice fields.</p><div id="setup-voice-slot"></div>${actions("Voice guidance is optional.","Open my studio →")}`;
-    $("#setup-voice-slot").append(panel);if(setupAnswers.voiceDescription)$("#voice-description").value=setupAnswers.voiceDescription;
+    const panel=$("#brief-voice-panel");
+    shell.innerHTML=`<p class="eyebrow">04 · ONE VOICE MESSAGE</p><h2 id="setup-title">Say it once. We’ll map the details.</h2><p class="setup-subtitle">Speak your idea naturally in English, Hindi, or Kannada. Local Whisper transcribes it; the brief mapper fills matching details and marks what is still missing.</p><div id="setup-voice-slot"></div>${actions("Voice is optional. You can also type after setup.","Open my studio →")}`;
+    $("#setup-voice-slot").append(panel);
   }
   if(step>1)$("#setup-back").onclick=()=>showSetupStep(step-1);
   $("#setup-next").onclick=()=>{captureSetupStep();if(step<4)showSetupStep(step+1);else finishSetup();};
@@ -356,11 +394,13 @@ function showAsset(platform){campaignAssets[platform]??=buildDraft({...values(),
 
 $("#scenario").addEventListener("change",setScenario);
 $("#analyze-voice").addEventListener("click",buildVoiceProfile);
-$("#transcribe-voice").addEventListener("click",transcribeVoiceAudio);
+$("#start-recording").addEventListener("click",startIdeaRecording);
+$("#stop-recording").addEventListener("click",stopIdeaRecording);
 
 $("#generate-button").addEventListener("click",()=>generateFromApi());
 $("#regenerate-edits").addEventListener("click",()=>{const editSeed=$("#adapted-output").value.trim();if(!editSeed){$("#draft-status-text").textContent="ADD AN EDIT FIRST";return;}generateFromApi({editSeed});});
-for(const selector of ["#topic","#audience","#campaign-goal","#brand-knowledge","#style-guide","#avoid-words","#voice-description","#campaign-keywords","#keyword-context"]) $(selector).addEventListener("input",()=>generateLocal());
+for(const selector of ["#topic","#audience","#campaign-goal","#brand-knowledge","#style-guide","#avoid-words","#voice-description","#campaign-keywords","#keyword-context"]) $(selector).addEventListener("input",()=>{generateLocal();renderBriefChecklist();});
+$("#topic").addEventListener("change",()=>mapBriefToFields($("#topic").value,outputLanguage));
 $("#voice-tone").addEventListener("change",generateLocal);
 $("#sample-posts-input").addEventListener("input",()=>{importedSamplePosts=null;if($("#sample-posts-input").value.trim())voiceMode="posts";renderProfile($("#scenario").value);generateLocal();});
 for(const selector of ["#platform","#audience","#campaign-category","#campaign-language","#optimization","#scenario-id","#campaign-intent"]) $(selector).addEventListener("change",()=>{if(selector==="#campaign-category"){creatorCategory=$(selector).value;loadScenarios(creatorCategory);}if(selector==="#campaign-language")outputLanguage=$(selector).value;if(selector==="#platform"){syncWordLimit();syncPublishFields();resetPublishApproval();}generateLocal();});
@@ -383,6 +423,6 @@ $("#copy-asset").addEventListener("click",async()=>{try{await navigator.clipboar
 $("#approve-publish").addEventListener("click",async()=>{if(!currentDraftId||currentDraftPlatform!==values().platform){$("#publish-status").textContent="Save a draft for the selected destination before publishing.";return;}if(!await persistEditedDraft())return;const account=platformAccounts[currentDraftPlatform];if(!account?.connected||!account.capabilities?.can_publish){$("#publish-status").textContent="The selected publishing account is not connected or does not have publishing access.";syncPublishAvailability();return;}$("#approve-publish").disabled=true;$("#publish-status").textContent=`Publishing to ${account.account_label||platformName(currentDraftPlatform)}…`;try{const r=await fetch(`/api/drafts/${currentDraftId}/publish`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({approved:true,approved_content:$("#adapted-output").value.trim(),asset_url:$("#publish-media-url").value.trim()})});const d=await r.json();if(!r.ok)throw new Error(d.error||"Publishing failed.");$("#publish-status").textContent=`Published to ${account.account_label||platformName(currentDraftPlatform)}${d.post_id?` · ${d.post_id}`:""}.`;currentDraftId=null;currentDraftPlatform=null;syncPublishAvailability();}catch(e){$("#publish-status").textContent=e.message||"Could not reach the publishing service.";syncPublishAvailability();}});
 $("#setup-dismiss").addEventListener("click",finishSetup);
 document.body.classList.add("is-setup");showSetupStep(1);
-renderProfile("streetwear");generateLocal();loadScenarios("product");loadVoiceProfiles();loadPlatformConnections();loadPerformanceSummary();
+renderProfile("streetwear");renderBriefChecklist();generateLocal();loadScenarios("product");loadVoiceProfiles();loadPlatformConnections();loadPerformanceSummary();
 fetch("/api/health").then(r=>r.ok?r.json():null).then(s=>{if(s)$("#api-status-label").textContent=s.mode==="sarvam"?"SARVAM CONNECTED":s.mode==="openai-compatible"?"AI CONNECTED":"LOCAL MODE";}).catch(()=>{});
 const oauthParams=new URLSearchParams(location.search);if(oauthParams.get("connected")){$("#publish-status").textContent=`${platformName(oauthParams.get("connected"))} account connected through OAuth.`;history.replaceState(null,"",location.pathname);}else if(oauthParams.get("oauth_error")){$("#publish-status").textContent=`${platformName(oauthParams.get("oauth_error"))} connection did not complete. Check provider credentials, redirect URI, scopes, and review status.`;history.replaceState(null,"",location.pathname);}
